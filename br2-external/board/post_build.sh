@@ -121,4 +121,12 @@ rm -f "$TARGET_DIR/etc/systemd/network/"* || true
 rm -f "$TARGET_DIR/etc/wpa_supplicant/"* || true
 rm -f "$TARGET_DIR/etc/dhcpcd.conf" || true
 
+# Mask all getty services to prevent login prompts
+for svc in $(ls "$TARGET_DIR/lib/systemd/system/" | grep getty@); do
+    ln -sf /dev/null "$TARGET_DIR/etc/systemd/system/$svc"
+done
+
+# Enable splash service at boot
+ln -sf ../pi-trezor-splash.service "$TARGET_DIR/etc/systemd/system/graphical.target.wants/pi-trezor-splash.service"
+
 echo "Pi-Trezor post-build script completed successfully"

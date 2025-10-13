@@ -1,0 +1,29 @@
+# Ensure all text files use LF line endings
+* text=auto eol=lf
+
+# Treat shell scripts as text
+*.sh text eol=lf
+
+# Treat config files as text
+*.conf text eol=lf
+*.fragment text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
+
+# Mark binaries as binary
+*.bin binary
+*.img binary
+*.so binary
+
+# Prevent diff on images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+
+# Exclude Copilot instructions from export
+.github/copilot-instructions.md export-ignore
+
+# Recommended for Buildroot projects
+output/ export-ignore
+buildroot/dl/ export-ignore

@@ -1,0 +1,45 @@
+name: Sync audit/fixes into dev
+
+on:
+  push:
+    branches: ["audit/fixes"]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Merge audit/fixes -> dev (fast-forward or create PR)
+        id: sync
+        run: |
+          git fetch origin dev audit/fixes
+          git checkout dev
+          git merge --ff-only origin/audit/fixes || true
+          if git merge-base --is-ancestor origin/audit/fixes HEAD; then
+            echo "dev already contains audit/fixes"
+          else
+            git checkout -b chore/sync-audit-to-dev
+            git merge --no-ff --no-edit origin/audit/fixes || true
+            git push -u origin chore/sync-audit-to-dev
+            echo "opened_pr=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Create PR to dev (if needed)
+        if: steps.sync.outputs.opened_pr == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: dev
+          branch: chore/sync-audit-to-dev
+          title: "Sync audit/fixes into dev"
+          body: "Automated sync of audit/fixes into dev"

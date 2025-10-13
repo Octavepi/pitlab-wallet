@@ -1,0 +1,17 @@
+[Unit]
+Description=Display Pi-Trezor splash on tty1
+After=systemd-user-sessions.service plymouth-quit-wait.service
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/pi-trezor-splash.sh
+StandardOutput=tty
+StandardInput=tty
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+RemainAfterExit=yes
+
+[Install]
+WantedBy=graphical.target

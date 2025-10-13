@@ -1,0 +1,34 @@
+name: Promote dev to main
+
+on:
+  workflow_dispatch:
+    inputs:
+      strategy:
+        description: "Merge strategy (ff-only or merge)"
+        required: true
+        default: "ff-only"
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Merge dev -> main
+        run: |
+          git fetch origin main dev
+          git checkout main
+          if [ "${{ inputs.strategy }}" = "ff-only" ]; then
+            git merge --ff-only origin/dev
+          else
+            git merge --no-ff --no-edit origin/dev
+          fi
+          git push origin main

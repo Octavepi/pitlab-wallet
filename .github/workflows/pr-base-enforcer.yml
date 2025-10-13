@@ -1,0 +1,17 @@
+name: Enforce PR base branch
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited]
+
+jobs:
+  enforce:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure PRs target 'audit/fixes'
+        run: |
+          if [ "${{ github.base_ref }}" != "audit/fixes" ]; then
+            echo "PRs must target 'audit/fixes'. Current base: '${{ github.base_ref }}'." >&2
+            echo "Please change the base branch to 'audit/fixes'." >&2
+            exit 1
+          fi

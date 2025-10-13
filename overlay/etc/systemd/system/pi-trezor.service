@@ -1,0 +1,16 @@
+[Unit]
+Description=Pi-Trezor Auto-start Service
+Documentation=https://github.com/trezor/trezor-firmware
+After=graphical.target touchscreen-setup.service
+Wants=trezord.service trezor-emu.service touchscreen-setup.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/systemctl start trezor-emu.service
+ExecStart=/bin/systemctl start trezord.service
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical.target

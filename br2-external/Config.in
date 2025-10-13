@@ -1,0 +1,2 @@
+source "$BR2_EXTERNAL_PI_TREZOR_PATH/package/trezord-go/Config.in"
+source "$BR2_EXTERNAL_PI_TREZOR_PATH/package/trezor-firmware/Config.in"

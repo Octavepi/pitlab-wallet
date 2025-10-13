@@ -1,0 +1,45 @@
+# Touchscreen device udev rules
+# Creates convenient symlinks and sets proper permissions for touchscreen devices
+
+# Generic touchscreen input devices
+SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_TOUCHSCREEN}=="1", SYMLINK+="input/touchscreen%n", MODE="0664", GROUP="input"
+
+# ADS7846 touchscreen (common in many SPI displays)
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="ADS7846*", SYMLINK+="input/touchscreen", MODE="0664", GROUP="input"
+
+# Generic SPI touchscreen devices
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="*spi*", ENV{ID_INPUT_TOUCHSCREEN}=="1", SYMLINK+="input/touchscreen_spi", MODE="0664", GROUP="input"
+
+# ILI series touchscreens
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="ili*", SYMLINK+="input/touchscreen_ili", MODE="0664", GROUP="input"
+
+# FT6236 touchscreen controller
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="FT6236*", SYMLINK+="input/touchscreen_ft", MODE="0664", GROUP="input"
+
+# TSC2007 touchscreen controller
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="TSC2007*", SYMLINK+="input/touchscreen_tsc", MODE="0664", GROUP="input"
+
+# Resistive touchscreen devices
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="*resistive*", SYMLINK+="input/touchscreen_resistive", MODE="0664", GROUP="input"
+
+# Capacitive touchscreen devices
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="*capacitive*", SYMLINK+="input/touchscreen_capacitive", MODE="0664", GROUP="input"
+
+# USB touchscreen devices (backup for USB-connected screens)
+SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_TOUCHSCREEN}=="1", ENV{ID_USB_INTERFACES}=="*:030000:*", SYMLINK+="input/touchscreen_usb", MODE="0664", GROUP="input"
+
+# HID multitouch devices
+SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_TOUCHSCREEN}=="1", ATTRS{name}=="*HID*", SYMLINK+="input/touchscreen_hid", MODE="0664", GROUP="input"
+
+# Set environment variables for touchscreen calibration
+ACTION=="add", SUBSYSTEM=="input", ENV{ID_INPUT_TOUCHSCREEN}=="1", ENV{TSLIB_CALIBFILE}="/etc/pointercal"
+ACTION=="add", SUBSYSTEM=="input", ENV{ID_INPUT_TOUCHSCREEN}=="1", ENV{TSLIB_CONFFILE}="/etc/ts.conf"
+ACTION=="add", SUBSYSTEM=="input", ENV{ID_INPUT_TOUCHSCREEN}=="1", ENV{TSLIB_TSDEVICE}="/dev/input/touchscreen"
+
+# Create device node for the primary touchscreen
+SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_TOUCHSCREEN}=="1", ATTRS{name}!="*Power*", ATTRS{name}!="*power*", TAG+="systemd", ENV{SYSTEMD_WANTS}+="touchscreen-setup.service"
+
+# Tag the first touchscreen device found
+SUBSYSTEM=="input", KERNEL=="event0", ENV{ID_INPUT_TOUCHSCREEN}=="1", SYMLINK+="input/touchscreen0"
+SUBSYSTEM=="input", KERNEL=="event1", ENV{ID_INPUT_TOUCHSCREEN}=="1", SYMLINK+="input/touchscreen1"
+SUBSYSTEM=="input", KERNEL=="event2", ENV{ID_INPUT_TOUCHSCREEN}=="1", SYMLINK+="input/touchscreen2"

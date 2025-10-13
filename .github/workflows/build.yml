@@ -1,0 +1,403 @@
+name: Pi-Trezor Build
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Weekly builds to ensure reproducibility
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      board:
+        description: 'Target board (pi3, pi4, pi5)'
+        required: false
+        default: 'pi4'
+        type: choice
+        options:
+        - pi3
+        - pi4
+        - pi5
+      display:
+        description: 'Display type'
+        required: false
+        default: 'waveshare35a'
+        type: string
+      rotation:
+        description: 'Display rotation (0, 90, 180, 270)'
+        required: false
+        default: '180'
+        type: choice
+        options:
+        - '0'
+        - '90'
+        - '180'
+        - '270'
+
+env:
+  DEBIAN_FRONTEND: noninteractive
+
+jobs:
+  build-matrix:
+    name: Build Pi-Trezor Images
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - board: pi3
+            display: waveshare35a
+            rotation: 180
+          - board: pi4
+            display: waveshare35a
+            rotation: 180
+          - board: pi4
+            display: hdmi
+            rotation: 0
+          - board: pi5
+            display: waveshare35a
+            rotation: 180
+          - board: pi5
+            display: hdmi
+            rotation: 0
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Free up disk space
+      run: |
+        # Remove unnecessary packages to free up space
+        sudo apt-get remove -y --purge man-db
+        sudo apt-get clean
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        df -h
+
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          golang-go \
+          protobuf-compiler \
+          libusb-1.0-0-dev \
+          libudev-dev \
+          libhidapi-dev \
+          gcc-aarch64-linux-gnu \
+          gcc-arm-linux-gnueabihf \
+          rsync \
+          qemu-user-static \
+          git \
+          wget \
+          cpio \
+          unzip \
+          bc \
+          device-tree-compiler \
+          python3 \
+          python3-pip \
+          python3-venv
+
+    - name: Configure build environment
+      run: |
+        echo "Building for: ${{ matrix.config.board }} / ${{ matrix.config.display }} / ${{ matrix.config.rotation }}°"
+        # Set up Python environment for Trezor Core build
+        python3 -m pip install --user pipenv
+
+    - name: Cache Buildroot downloads
+      uses: actions/cache@v4
+      with:
+        path: |
+          buildroot/dl
+        key: buildroot-dl-${{ runner.os }}-${{ hashFiles('configs/*_defconfig') }}
+        restore-keys: |
+          buildroot-dl-${{ runner.os }}-
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: go-${{ runner.os }}-${{ hashFiles('**/go.sum', '**/go.mod') }}
+        restore-keys: |
+          go-${{ runner.os }}-
+
+    - name: Build Pi-Trezor image
+      run: |
+        # Use manual inputs if workflow_dispatch, otherwise use matrix
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          BOARD="${{ github.event.inputs.board }}"
+          DISPLAY="${{ github.event.inputs.display }}"
+          ROTATION="${{ github.event.inputs.rotation }}"
+        else
+          BOARD="${{ matrix.config.board }}"
+          DISPLAY="${{ matrix.config.display }}"
+          ROTATION="${{ matrix.config.rotation }}"
+        fi
+        
+        echo "Building Pi-Trezor: $BOARD / $DISPLAY / ${ROTATION}°"
+        
+        # Run the build with timeout to prevent hanging
+        timeout 7200 ./build_pi-trezor.sh \
+          --board "$BOARD" \
+          --display "$DISPLAY" \
+          --rotation "$ROTATION" || {
+          echo "Build failed or timed out after 2 hours"
+          exit 1
+        }
+
+    - name: Verify build outputs
+      run: |
+        echo "=== Build Verification ==="
+        ls -la output/images/
+        
+        if [ -f output/images/sdcard.img ]; then
+          echo "✅ SD card image created successfully"
+          IMAGE_SIZE=$(du -h output/images/sdcard.img | cut -f1)
+          echo "📊 Image size: $IMAGE_SIZE"
+          
+          # Verify image integrity
+          if [ -f output/images/sdcard.img.sha256 ]; then
+            echo "🔐 Verifying SHA256 checksum..."
+            cd output/images && sha256sum -c sdcard.img.sha256
+            echo "✅ Checksum verified"
+          fi
+          
+          # Check image structure
+          echo "🔍 Image structure:"
+          fdisk -l output/images/sdcard.img || true
+          
+        else
+          echo "❌ SD card image not found"
+          echo "Build directory contents:"
+          find . -name "*.img" -o -name "*.log" | head -20
+          exit 1
+        fi
+
+    - name: Generate build artifacts
+      run: |
+        # Create build info
+        BOARD="${{ matrix.config.board }}"
+        DISPLAY="${{ matrix.config.display }}"  
+        ROTATION="${{ matrix.config.rotation }}"
+        
+        mkdir -p artifacts
+        
+        # Copy main image
+        cp output/images/sdcard.img "artifacts/pi-trezor-${BOARD}-${DISPLAY}-${ROTATION}deg.img"
+        
+        # Copy checksums
+        if [ -f output/images/sdcard.img.sha256 ]; then
+          cp output/images/sdcard.img.sha256 "artifacts/pi-trezor-${BOARD}-${DISPLAY}-${ROTATION}deg.img.sha256"
+        fi
+        
+        # Copy build info
+        if [ -f output/images/build-info.txt ]; then
+          cp output/images/build-info.txt "artifacts/build-info-${BOARD}-${DISPLAY}-${ROTATION}deg.txt"
+        fi
+        
+        # Create comprehensive build report
+        cat > "artifacts/build-report-${BOARD}-${DISPLAY}-${ROTATION}deg.txt" << EOF
+        Pi-Trezor Build Report
+        =====================
+        
+        Build Date: $(date -u)
+        Git Commit: ${{ github.sha }}
+        Git Ref: ${{ github.ref }}
+        Workflow: ${{ github.workflow }}
+        
+        Configuration:
+        - Board: ${BOARD}
+        - Display: ${DISPLAY}  
+        - Rotation: ${ROTATION}°
+        
+        Build Environment:
+        - OS: $(lsb_release -d | cut -f2)
+        - Kernel: $(uname -r)
+        - Go Version: $(go version)
+        - GCC Version: $(gcc --version | head -1)
+        
+        Image Details:
+        - Size: $(du -h artifacts/pi-trezor-${BOARD}-${DISPLAY}-${ROTATION}deg.img | cut -f1)
+        - SHA256: $(sha256sum artifacts/pi-trezor-${BOARD}-${DISPLAY}-${ROTATION}deg.img | cut -d' ' -f1)
+        
+        Build Status: SUCCESS ✅
+        EOF
+        
+        echo "Generated artifacts:"
+        ls -la artifacts/
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: pi-trezor-${{ matrix.config.board }}-${{ matrix.config.display }}-${{ matrix.config.rotation }}deg
+        path: artifacts/
+        retention-days: 30
+        compression-level: 6
+
+    - name: Upload build logs
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-logs-${{ matrix.config.board }}-${{ matrix.config.display }}-failure
+        path: |
+          buildroot/output/build/build-time.log
+          buildroot/output/build/packages-file-list.txt
+          buildroot/output/build/*/.stamp_*
+          *.log
+        retention-days: 7
+
+  release:
+    name: Create Release
+    needs: build-matrix
+    runs-on: ubuntu-24.04
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: release-artifacts
+
+    - name: Prepare release assets
+      run: |
+        echo "=== Preparing Release Assets ==="
+        mkdir -p release
+        
+        # Collect all images and organize by board
+        for artifact_dir in release-artifacts/*/; do
+          echo "Processing: $artifact_dir"
+          cp "$artifact_dir"/*.img release/ || true
+          cp "$artifact_dir"/*.sha256 release/ || true
+          cp "$artifact_dir"/*.txt release/ || true
+        done
+        
+        echo "Release assets:"
+        ls -la release/
+        
+        # Create release summary
+        cat > release/RELEASE_NOTES.md << EOF
+        # Pi-Trezor Release ${{ github.ref_name }}
+        
+        This release includes pre-built Pi-Trezor images for multiple Raspberry Pi models and display configurations.
+        
+        ## 📦 Available Images
+        
+        ### Raspberry Pi 3 (32-bit ARM)
+        - \`pi-trezor-pi3-waveshare35a-180deg.img\` - Waveshare 3.5" display, 180° rotation
+        
+        ### Raspberry Pi 4 (64-bit ARM) 
+        - \`pi-trezor-pi4-waveshare35a-180deg.img\` - Waveshare 3.5" display, 180° rotation ⭐ **Recommended**
+        - \`pi-trezor-pi4-hdmi-0deg.img\` - HDMI display, standard orientation
+        
+        ### Raspberry Pi 5 (64-bit ARM)
+        - \`pi-trezor-pi5-waveshare35a-180deg.img\` - Waveshare 3.5" display, 180° rotation
+        - \`pi-trezor-pi5-hdmi-0deg.img\` - HDMI display, standard orientation
+        
+        ## 🚀 Quick Start
+        
+        1. **Download** the appropriate image for your hardware
+        2. **Flash** to SD card: \`sudo dd if=pi-trezor-*.img of=/dev/sdX bs=4M status=progress\`
+        3. **Boot** your Raspberry Pi
+        4. **Connect** to Trezor Suite via USB
+        
+        ## ✅ Verification
+        
+        Each image includes a SHA256 checksum file. Verify integrity before flashing:
+        \`\`\`bash
+        sha256sum -c pi-trezor-*.img.sha256
+        \`\`\`
+        
+        ## 🔐 Security Notes
+        
+        - These images are completely air-gapped (no network connectivity)
+        - Built with reproducible build system
+        - Source code available at: https://github.com/Octavepi/pi-trezor
+        
+        For custom configurations, build from source using the provided build script.
+        EOF
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        name: "Pi-Trezor ${{ github.ref_name }}"
+        body_path: release/RELEASE_NOTES.md
+        files: |
+          release/*.img
+          release/*.sha256
+          release/*.txt
+        draft: false
+        prerelease: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') }}
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-24.04
+    needs: build-matrix
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Run shell script security scan
+      run: |
+        echo "=== Security Scan ==="
+        
+        # Check for potentially dangerous patterns
+        echo "🔍 Scanning for security issues..."
+        
+        # Look for hardcoded credentials
+        if grep -r -i "password\|secret\|key" --include="*.sh" --include="*.conf" .; then
+          echo "⚠️  Found potential hardcoded credentials"
+        else
+          echo "✅ No hardcoded credentials found"
+        fi
+        
+        # Check for network-related code
+        if grep -r -E "(wget|curl|ssh|ftp)" --include="*.sh" --include="*.conf" configs/ overlay/ board/; then
+          echo "⚠️  Found network-related commands in security-sensitive areas"
+        else
+          echo "✅ No unauthorized network commands found"
+        fi
+        
+        # Check for privilege escalation
+        if grep -r -E "(sudo|su |chmod 777)" --include="*.sh" overlay/; then
+          echo "⚠️  Found potential privilege escalation in overlay"
+        else
+          echo "✅ No privilege escalation found in overlay"
+        fi
+
+    - name: Validate Buildroot configurations
+      run: |
+        echo "=== Buildroot Configuration Validation ==="
+        
+        # Check that networking is properly disabled
+        for config in configs/pi-trezor-*_defconfig; do
+          echo "Checking $config..."
+          
+          # These should NOT be present (networking disabled)
+          if grep -E "BR2_PACKAGE_DHCPCD=y|BR2_PACKAGE_WIRELESS_TOOLS=y|BR2_PACKAGE_WPA_SUPPLICANT=y" "$config"; then
+            echo "❌ Networking appears to be enabled in $config"
+            exit 1
+          else
+            echo "✅ Networking properly disabled in $config"
+          fi
+          
+          # These SHOULD be present (security features)
+          if grep -q "BR2_TARGET_ROOTFS_READ_ONLY=y" "$config"; then
+            echo "✅ Read-only filesystem enabled in $config"
+          else
+            echo "❌ Read-only filesystem not enabled in $config"
+            exit 1
+          fi
+        done

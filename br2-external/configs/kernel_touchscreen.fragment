@@ -1,0 +1,76 @@
+# Kernel configuration fragment for touchscreen and display support
+# This fragment adds touchscreen and framebuffer TFT display drivers
+# to the Raspberry Pi kernel configuration
+
+# Input device support
+CONFIG_INPUT_TOUCHSCREEN=y
+
+# SPI-based touchscreen controllers
+CONFIG_TOUCHSCREEN_ADS7846=y
+CONFIG_TOUCHSCREEN_TSC2007=y
+CONFIG_TOUCHSCREEN_ILI210X=y
+CONFIG_TOUCHSCREEN_FT6236=y
+
+# Framebuffer TFT display support
+CONFIG_FB_TFT=y
+CONFIG_FB_TFT_AGM1264K_FL=y
+CONFIG_FB_TFT_BD663474=y
+CONFIG_FB_TFT_HX8340BN=y
+CONFIG_FB_TFT_HX8347D=y
+CONFIG_FB_TFT_HX8353D=y
+CONFIG_FB_TFT_ILI9163=y
+CONFIG_FB_TFT_ILI9320=y
+CONFIG_FB_TFT_ILI9325=y
+CONFIG_FB_TFT_ILI9340=y
+CONFIG_FB_TFT_ILI9341=y
+CONFIG_FB_TFT_ILI9481=y
+CONFIG_FB_TFT_ILI9486=y
+CONFIG_FB_TFT_PCD8544=y
+CONFIG_FB_TFT_RA8875=y
+CONFIG_FB_TFT_S6D02A1=y
+CONFIG_FB_TFT_S6D1121=y
+CONFIG_FB_TFT_SSD1289=y
+CONFIG_FB_TFT_SSD1305=y
+CONFIG_FB_TFT_SSD1306=y
+CONFIG_FB_TFT_SSD1331=y
+CONFIG_FB_TFT_SSD1351=y
+CONFIG_FB_TFT_ST7735R=y
+CONFIG_FB_TFT_TINYLCD=y
+CONFIG_FB_TFT_TLS8204=y
+CONFIG_FB_TFT_UC1701=y
+CONFIG_FB_TFT_UPD161704=y
+CONFIG_FB_TFT_WATTEROTT=y
+
+# SPI support for display communication
+CONFIG_SPI_BCM2835=y
+CONFIG_SPI_BCM2835AUX=y
+
+# GPIO support for touchscreen interrupts
+CONFIG_GPIOLIB=y
+CONFIG_GPIO_SYSFS=y
+
+# I2C support for some touchscreens
+CONFIG_I2C_BCM2835=y
+
+# DRM support for modern display stack
+CONFIG_DRM=y
+CONFIG_DRM_VC4=y
+CONFIG_DRM_VC4_HDMI_CEC=y
+
+# Framebuffer console support
+CONFIG_FRAMEBUFFER_CONSOLE=y
+CONFIG_FRAMEBUFFER_CONSOLE_ROTATION=y
+
+# Support for firmware-based display configuration
+CONFIG_FB_SIMPLE=y
+
+# HID support for USB touchscreens
+CONFIG_HID_MULTITOUCH=y
+CONFIG_USB_HID=y
+
+# Input event interface
+CONFIG_INPUT_EVDEV=y
+
+# Device Tree overlay support
+CONFIG_OF_CONFIGFS=y
+CONFIG_OF_OVERLAY=y

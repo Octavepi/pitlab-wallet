@@ -1,0 +1,43 @@
+# Trezor hardware wallet udev rules
+# These rules ensure proper permissions for Trezor devices
+# and make them accessible to the trezor user
+
+# Trezor One (T1) - Original hardware wallet
+SUBSYSTEM=="usb", ATTR{idVendor}=="534c", ATTR{idProduct}=="0001", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+
+# Trezor One (T1) - Bootloader mode
+SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="53c0", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+
+# Trezor Model T (T2) - Normal mode
+SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="53c1", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+
+# Trezor Model T (T2) - Bootloader mode
+SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="53c0", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+
+# Trezor Safe 3 (TS3)
+SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="53c2", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+
+# Trezor Safe 5 (TS5)  
+SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="53c3", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+
+# HID devices for Trezor communication
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="534c", ATTRS{idProduct}=="0001", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="53c0", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="53c1", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="53c2", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="53c3", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+
+# WebUSB interface for browser communication (if needed)
+SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="53c1", ATTR{bInterfaceClass}=="03", ATTR{bInterfaceSubClass}=="00", ATTR{bInterfaceProtocol}=="00", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+
+# Create symlinks for easier device identification
+SUBSYSTEM=="usb", ATTR{idVendor}=="534c", ATTR{idProduct}=="0001", SYMLINK+="trezor_one_%n"
+SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="53c1", SYMLINK+="trezor_t_%n"
+SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="53c2", SYMLINK+="trezor_safe3_%n"
+SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="53c3", SYMLINK+="trezor_safe5_%n"
+
+# Label devices for identification
+SUBSYSTEM=="usb", ATTR{idVendor}=="534c", ATTR{idProduct}=="0001", ENV{ID_MODEL}="Trezor_One"
+SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="53c1", ENV{ID_MODEL}="Trezor_Model_T"
+SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="53c2", ENV{ID_MODEL}="Trezor_Safe_3"
+SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="53c3", ENV{ID_MODEL}="Trezor_Safe_5"

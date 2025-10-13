@@ -1,0 +1,57 @@
+# BusyBox configuration fragment for security hardening
+# Disables potentially dangerous features for air-gapped operation
+
+# Disable network-related utilities
+# CONFIG_TELNET is not set
+# CONFIG_TELNETD is not set
+# CONFIG_FTPGET is not set
+# CONFIG_FTPPUT is not set
+# CONFIG_TFTP is not set
+# CONFIG_TFTPD is not set
+# CONFIG_WGET is not set
+# CONFIG_ARPING is not set
+# CONFIG_PING is not set
+# CONFIG_PING6 is not set
+# CONFIG_NETSTAT is not set
+# CONFIG_NSLOOKUP is not set
+# CONFIG_TRACEROUTE is not set
+# CONFIG_TRACEROUTE6 is not set
+# CONFIG_ROUTE is not set
+
+# Disable potentially dangerous system utilities
+# CONFIG_ADDGROUP is not set
+# CONFIG_ADDUSER is not set
+# CONFIG_DELUSER is not set
+# CONFIG_DELGROUP is not set
+# CONFIG_GETTY is not set
+# CONFIG_LOGIN is not set
+# CONFIG_PASSWD is not set
+# CONFIG_SU is not set
+# CONFIG_SULOGIN is not set
+
+# Keep essential utilities for troubleshooting
+CONFIG_PS=y
+CONFIG_TOP=y
+CONFIG_FREE=y
+CONFIG_UPTIME=y
+CONFIG_LS=y
+CONFIG_CAT=y
+CONFIG_DMESG=y
+CONFIG_LSUSB=y
+
+# Keep file system utilities
+CONFIG_MOUNT=y
+CONFIG_UMOUNT=y
+CONFIG_DF=y
+CONFIG_SYNC=y
+
+# Keep process management
+CONFIG_KILL=y
+CONFIG_KILLALL=y
+CONFIG_PIDOF=y
+
+# Essential shell features
+CONFIG_ASH=y
+CONFIG_ASH_BUILTIN_ECHO=y
+CONFIG_ASH_BUILTIN_PRINTF=y
+CONFIG_ASH_BUILTIN_TEST=y

@@ -1,0 +1,25 @@
+[Unit]
+Description=Touchscreen Calibration Setup
+Documentation=man:ts_calibrate(1)
+After=graphical.target
+Before=trezor-emu.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/touchscreen-setup.sh
+StandardOutput=journal
+StandardError=journal
+
+# Security settings
+NoNewPrivileges=true
+ProtectSystem=false
+ProtectHome=true
+PrivateNetwork=true
+PrivateDevices=false
+
+# Allow access to input devices and filesystem
+SupplementaryGroups=input
+
+[Install]
+WantedBy=graphical.target

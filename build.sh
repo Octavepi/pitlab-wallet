@@ -189,8 +189,8 @@ check_host_deps() {
 check_host_deps
 
 # Check if we're in the right directory
-if [[ ! -f "build_pi-trezor.sh" ]]; then
-    log_error "Please run this script from the pi-trezor repository root"
+if [[ ! -f "build.sh" ]]; then
+    log_error "Please run this script from the pitlab-wallet repository root"
     exit 1
 fi
 

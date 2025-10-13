@@ -2,7 +2,7 @@
 
 ## Overview
 
-Pi-Trezor is designed as an **air-gapped hardware wallet appliance** with security as the primary focus. This document outlines the security model, known limitations, and reporting procedures.
+PitLab Wallet is designed as an **air-gapped hardware wallet appliance** with security as the primary focus. This document outlines the security model, known limitations, and reporting procedures.
 
 ## Security Model
 
@@ -66,7 +66,7 @@ Pi-Trezor is designed as an **air-gapped hardware wallet appliance** with securi
    git verify-commit HEAD  # If GPG-signed
    
    # Build your own image
-   ./build_pi-trezor.sh --board pi4 --display waveshare35a
+   ./build.sh --board pi4 --display waveshare35a
    ```
 
 2. **Verify Image Checksums**
@@ -126,7 +126,7 @@ Pi-Trezor is designed as an **air-gapped hardware wallet appliance** with securi
 
 ## Reproducible Builds
 
-Pi-Trezor aims for reproducible builds to enable verification:
+PitLab Wallet aims for reproducible builds to enable verification:
 
 1. **Fixed Versions**
    - Buildroot: `2024.02.x` branch
@@ -136,12 +136,12 @@ Pi-Trezor aims for reproducible builds to enable verification:
 2. **Verifying Builds**
    ```bash
    # Two independent builds should produce identical images
-   ./build_pi-trezor.sh --board pi4
+   ./build.sh --board pi4
    sha256sum output/images/sdcard.img > build1.sha256
    
    # Clean and rebuild
    rm -rf buildroot/output output/
-   ./build_pi-trezor.sh --board pi4
+   ./build.sh --board pi4
    sha256sum output/images/sdcard.img > build2.sha256
    
    # Compare (should be identical for reproducible build)
@@ -196,12 +196,12 @@ Security advisories will be published via:
 
 ### Applying Updates
 
-Pi-Trezor uses an immutable OS design:
+PitLab Wallet uses an immutable OS design:
 
 ```bash
 # Security updates require rebuilding and reflashing
 git pull origin main
-./build_pi-trezor.sh --board pi4
+./build.sh --board pi4
 sudo dd if=output/images/sdcard.img of=/dev/sdX bs=4M
 ```
 
@@ -235,7 +235,7 @@ sha256sum -c pi-trezor-*.img.sha256
 
 ## Disclaimer
 
-Pi-Trezor is provided "as is" without warranty. Users assume all risks associated with its use for cryptocurrency storage. Always maintain proper backups of recovery seeds and test with small amounts first.
+PitLab Wallet is provided "as is" without warranty. Users assume all risks associated with its use for cryptocurrency storage. Always maintain proper backups of recovery seeds and test with small amounts first.
 
 ---
 

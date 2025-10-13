@@ -1,0 +1,13 @@
+[Unit]
+Description=tslib uinput remapper for touchscreen
+After=local-fs.target
+Before=trezor-emu.service
+ConditionPathExists=/var/lib/pi-trezor/pointercal
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/ts-uinput.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

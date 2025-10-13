@@ -87,8 +87,13 @@ dtparam=audio=off
 dtparam=spi=on
 dtparam=i2c_arm=on
 
-# USB settings for Trezor communication
+# USB gadget mode - Pi acts as Trezor hardware wallet device
 dtoverlay=dwc2
+dtparam=dr_mode=peripheral
+
+# Disable activity LEDs for stealth operation
+dtparam=act_led_trigger=none
+dtparam=pwr_led_trigger=none
 EOF
 
 echo "Generating SD card image with genimage..."

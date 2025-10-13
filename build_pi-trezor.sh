@@ -9,10 +9,9 @@ set -e
 BOARD="pi4"
 DISPLAY="waveshare35a"
 ROTATION="180"
-ARCH=""
-CROSS_COMPILE=""
-DEFCONFIG=""
-KERNEL_DEFCONFIG=""
+CLEAN=0
+DISTCLEAN=0
+# Note: Toolchain and kernel defconfigs are handled by Buildroot defconfigs.
 
 # Colors for output
 RED='\033[0;31m'
@@ -45,10 +44,19 @@ Pi-Trezor Build System - Dynamic Multi-Board & Display Support
 
 Usage: $0 [OPTIONS]
 
+Positional usage:
+    $0 [BOARD] [DISPLAY] [ROTATION] [FLAGS]
+        BOARD    : pi3 | pi4 | pi5 (default: pi4)
+        DISPLAY  : display overlay name (default: waveshare35a)
+        ROTATION : 0 | 90 | 180 | 270 (default: 180)
+        FLAGS    : -c | --clean | -dc | --distclean
+
 Options:
     --board <pi3|pi4|pi5>                 Target Raspberry Pi board (default: pi4)
     --display <display_name>              Display overlay name (default: waveshare35a)
     --rotation <0|90|180|270>            Display rotation angle (default: 180)
+    --clean|-c                           Wipe Buildroot output and rebuild from scratch
+    --distclean|-dc                      Remove Buildroot download cache (dl) as well; implies --clean
     --help                               Show this help message
 
 Supported displays:
@@ -56,6 +64,12 @@ Supported displays:
     Note: All Raspberry Pi firmware overlays are supported dynamically
 
 Examples:
+    # Positional
+    $0 pi4 waveshare35a 90
+    $0 pi5 hdmi 0 -c
+    $0 pi4 waveshare35a 180 -dc
+    
+    # Long options (still supported)
     $0 --board pi4 --display waveshare35a --rotation 90
     $0 --board pi5 --display hdmi --rotation 0
     $0 --board pi3 --display ili9341 --rotation 270
@@ -71,56 +85,51 @@ The build process will:
 EOF
 }
 
-# Parse command line arguments
+# Parse command line arguments (support both positional and long options)
+POSITIONAL_COUNT=0
 while [[ $# -gt 0 ]]; do
     case $1 in
+        # Long options
         --board)
-            BOARD="$2"
-            shift 2
-            ;;
+            BOARD="$2"; shift 2 ;;
         --display)
-            DISPLAY="$2"
-            shift 2
-            ;;
+            DISPLAY="$2"; shift 2 ;;
         --rotation)
-            ROTATION="$2"
-            shift 2
-            ;;
+            ROTATION="$2"; shift 2 ;;
+        --clean|-c)
+            CLEAN=1; shift 1 ;;
+        --distclean|-dc)
+            DISTCLEAN=1; CLEAN=1; shift 1 ;;
         --help|-h)
-            show_help
-            exit 0
-            ;;
+            show_help; exit 0 ;;
+        # Positional args
+        -*)
+            log_error "Unknown flag: $1"; show_help; exit 1 ;;
         *)
-            log_error "Unknown option: $1"
-            show_help
-            exit 1
-            ;;
+            if [[ $POSITIONAL_COUNT -eq 0 ]]; then
+                BOARD="$1"
+            elif [[ $POSITIONAL_COUNT -eq 1 ]]; then
+                DISPLAY="$1"
+            elif [[ $POSITIONAL_COUNT -eq 2 ]]; then
+                ROTATION="$1"
+            else
+                log_error "Unexpected extra argument: $1"; show_help; exit 1
+            fi
+            POSITIONAL_COUNT=$((POSITIONAL_COUNT+1))
+            shift 1 ;;
     esac
 done
 
 # Validate board selection and set build parameters
 case $BOARD in
     pi3)
-        ARCH="arm"
-        CROSS_COMPILE="arm-linux-gnueabihf-"
-        DEFCONFIG="raspberrypi3_defconfig"
-        KERNEL_DEFCONFIG="bcm2709_defconfig"
-        GOARCH="arm"
-        GOARM="7"
+        # Buildroot handles toolchain; no external CROSS_COMPILE needed
         ;;
     pi4)
-        ARCH="arm64"
-        CROSS_COMPILE="aarch64-linux-gnu-"
-        DEFCONFIG="raspberrypi4_64_defconfig"
-        KERNEL_DEFCONFIG="bcm2711_defconfig"
-        GOARCH="arm64"
+        # Buildroot handles toolchain; no external CROSS_COMPILE needed
         ;;
     pi5)
-        ARCH="arm64"
-        CROSS_COMPILE="aarch64-linux-gnu-"
-        DEFCONFIG="raspberrypi5_defconfig"
-        KERNEL_DEFCONFIG="bcm2712_defconfig"
-        GOARCH="arm64"
+        # Buildroot handles toolchain; no external CROSS_COMPILE needed
         ;;
     *)
         log_error "Unsupported board: $BOARD"
@@ -142,52 +151,48 @@ esac
 
 log_info "Building Pi-Trezor for $BOARD with $DISPLAY display (rotation: $ROTATION°)"
 
+# Derive per-config Buildroot output directory (relative to buildroot/)
+OUTPUT_SUFFIX="${BOARD}_${DISPLAY}_${ROTATION}"
+BR_OUTPUT_DIR="output/${OUTPUT_SUFFIX}"
+
+# Check for essential host dependencies
+check_host_deps() {
+    log_step "Checking for essential host dependencies..."
+    local missing_deps=()
+    local deps=(
+        "make"
+        "gcc"
+        "go"
+        "protoc"
+        "git"
+        "wget"
+        "cpio"
+        "unzip"
+        "bc"
+        "dtc"
+        "python3"
+    )
+
+    for dep in "${deps[@]}"; do
+        if ! command -v "$dep" &> /dev/null; then
+            missing_deps+=("$dep")
+        fi
+    done
+
+    if [ ${#missing_deps[@]} -ne 0 ]; then
+        log_error "Missing host dependencies: ${missing_deps[*]}. Please run 'sudo ./scripts/setup-host.sh' to install them."
+        exit 1
+    fi
+    log_info "All essential dependencies are installed."
+}
+
+check_host_deps
+
 # Check if we're in the right directory
 if [[ ! -f "build_pi-trezor.sh" ]]; then
     log_error "Please run this script from the pi-trezor repository root"
     exit 1
 fi
-
-# Install host dependencies
-install_host_deps() {
-    log_step "Installing host dependencies..."
-    
-    # Check if running on Ubuntu/Debian
-    if ! command -v apt-get &> /dev/null; then
-        log_warn "This script is designed for Ubuntu/Debian systems"
-        log_warn "Please install the following packages manually:"
-        log_warn "  build-essential golang-go protobuf-compiler libusb-1.0-0-dev"
-        log_warn "  libudev-dev libhidapi-dev gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf"
-        log_warn "  rsync qemu-user-static git wget cpio unzip bc"
-        read -p "Continue assuming dependencies are installed? (y/N): " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            exit 1
-        fi
-        return
-    fi
-    
-    sudo apt-get update
-    sudo apt-get install -y \
-        build-essential \
-        golang-go \
-        protobuf-compiler \
-        libusb-1.0-0-dev \
-        libudev-dev \
-        libhidapi-dev \
-        gcc-aarch64-linux-gnu \
-        gcc-arm-linux-gnueabihf \
-        rsync \
-        qemu-user-static \
-        git \
-        wget \
-        cpio \
-        unzip \
-        bc \
-        device-tree-compiler \
-        python3 \
-        python3-pip
-}
 
 # Initialize Buildroot submodule if needed
 setup_buildroot() {
@@ -215,7 +220,7 @@ configure_buildroot() {
     cd buildroot
     
     # Use our custom defconfig from BR2_EXTERNAL
-    make pi-trezor-${BOARD}_defconfig BR2_EXTERNAL=../br2-external
+    make pi-trezor-${BOARD}_defconfig BR2_EXTERNAL=../br2-external O="${BR_OUTPUT_DIR}"
     
     # Enable additional packages if needed
     if [[ $DISPLAY == "hdmi" ]]; then
@@ -224,6 +229,38 @@ configure_buildroot() {
     fi
     
     cd ..
+}
+
+# Clean previous build output if requested
+clean_build_output() {
+    if [[ "$CLEAN" -eq 1 ]]; then
+        log_step "Cleaning previous build output..."
+        if [[ -d "buildroot/${BR_OUTPUT_DIR}" ]]; then
+            rm -rf "buildroot/${BR_OUTPUT_DIR}"
+            log_info "Removed buildroot/${BR_OUTPUT_DIR}"
+        else
+            log_info "No existing buildroot/${BR_OUTPUT_DIR} directory to remove"
+        fi
+        # Intentionally do NOT remove output/images to preserve previously built images
+    fi
+}
+
+# Distclean removes the Buildroot download cache as well (forces re-download of sources)
+distclean() {
+    if [[ "$DISTCLEAN" -eq 1 ]]; then
+        log_step "Performing distclean (removing Buildroot download cache)..."
+        if [[ -d "buildroot/dl" ]]; then
+            rm -rf buildroot/dl
+            log_info "Removed buildroot/dl (download cache)"
+        else
+            log_info "No existing buildroot/dl directory to remove"
+        fi
+        # Also ensure per-config output is removed
+        if [[ -d "buildroot/${BR_OUTPUT_DIR}" ]]; then
+            rm -rf "buildroot/${BR_OUTPUT_DIR}"
+            log_info "Removed buildroot/${BR_OUTPUT_DIR} (per-config output)"
+        fi
+    fi
 }
 
 # Build the system
@@ -237,9 +274,10 @@ build_system() {
     export PI_TREZOR_DISPLAY=$DISPLAY
     export PI_TREZOR_ROTATION=$ROTATION
     
-    # Build everything
-    log_info "Starting Buildroot build process (this may take a while)..."
-    make all
+    # Build everything with parallel compilation
+    NPROC=$(nproc)
+    log_info "Starting Buildroot build process with $NPROC parallel jobs (this may take a while)..."
+    make -j$NPROC all O="${BR_OUTPUT_DIR}"
     
     cd ..
 }
@@ -250,8 +288,8 @@ copy_output() {
     
     mkdir -p output/images
     
-    if [[ -f "buildroot/output/images/sdcard.img" ]]; then
-        cp buildroot/output/images/sdcard.img output/images/
+    if [[ -f "buildroot/${BR_OUTPUT_DIR}/images/sdcard.img" ]]; then
+        cp "buildroot/${BR_OUTPUT_DIR}/images/sdcard.img" output/images/
         log_info "Build complete! Image available at: output/images/sdcard.img"
         
         # Generate checksums
@@ -279,8 +317,9 @@ main() {
     
     trap cleanup EXIT
     
-    install_host_deps
     setup_buildroot
+    clean_build_output
+    distclean
     configure_buildroot
     build_system
     copy_output

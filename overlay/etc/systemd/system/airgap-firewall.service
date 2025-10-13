@@ -1,0 +1,31 @@
+[Unit]
+Description=Pi-Trezor Air-Gap Firewall Enforcement
+Documentation=man:iptables(8)
+After=local-fs.target
+Before=network.target
+DefaultDependencies=no
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/airgap-firewall.sh
+Restart=always
+RestartSec=1
+StandardOutput=journal
+StandardError=journal
+
+# Security settings
+NoNewPrivileges=false
+ProtectSystem=false
+ProtectHome=true
+PrivateNetwork=false
+PrivateDevices=false
+
+# Network capabilities needed for firewall management
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW
+
+# Logging
+SyslogIdentifier=airgap-firewall
+
+[Install]
+WantedBy=multi-user.target

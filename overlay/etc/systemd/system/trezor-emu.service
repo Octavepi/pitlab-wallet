@@ -1,8 +1,8 @@
 [Unit]
 Description=Trezor Core Emulator
 Documentation=https://github.com/trezor/trezor-firmware
-After=graphical.target touchscreen-setup.service
-Requires=graphical.target
+After=trezord.service ts-uinput.service touchscreen-calibration-once.service
+Requires=trezord.service
 
 [Service]
 Type=simple
@@ -29,9 +29,13 @@ SupplementaryGroups=input video
 Environment=DISPLAY=:0
 Environment=SDL_VIDEODRIVER=fbcon
 Environment=SDL_FBDEV=/dev/fb0
+Environment=TSLIB_TSDEVICE=/dev/input/event0
+Environment=TSLIB_CALIBFILE=/var/lib/pi-trezor/pointercal
+Environment=TSLIB_CONFFILE=/etc/ts.conf
+Environment=TSLIB_PLUGINDIR=/usr/lib/ts
 
 # Logging
 SyslogIdentifier=trezor-emu
 
 [Install]
-WantedBy=graphical.target
+WantedBy=multi-user.target

@@ -80,3 +80,6 @@ go.mod
 # OS files
 Thumbs.db
 .DS_Store
+
+# GitHub Copilot instructions (project-specific, not for public repo)
+.github/copilot-instructions.md

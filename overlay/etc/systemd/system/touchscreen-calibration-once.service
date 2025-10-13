@@ -1,0 +1,13 @@
+[Unit]
+Description=Run touchscreen calibration on first boot only
+After=local-fs.target
+Before=trezor-emu.service ts-uinput.service
+ConditionPathExists=!/var/lib/pi-trezor/.calibrated
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/touchscreen-calibration-once.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

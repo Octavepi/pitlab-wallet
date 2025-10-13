@@ -53,7 +53,13 @@ Pi-Trezor is a reproducible, air-gapped Raspberry Pi appliance that runs Trezor 
    cd pi-trezor
    ```
 
-2. **Build for Your Hardware**
+2. **Install Host Dependencies**
+   ```bash
+   # Run this once on your build machine (Debian/Ubuntu recommended)
+   sudo ./scripts/setup-host.sh
+   ```
+
+3. **Build for Your Hardware**
    ```bash
    # Raspberry Pi 4 with Waveshare 3.5" display (default configuration)
    ./build_pi-trezor.sh
@@ -86,18 +92,39 @@ Pi-Trezor is a reproducible, air-gapped Raspberry Pi appliance that runs Trezor 
 ### Command Line Arguments
 
 ```bash
-./build_pi-trezor.sh [OPTIONS]
+./build_pi-trezor.sh [BOARD] [DISPLAY] [ROTATION] [FLAGS]
+
+Positional:
+   BOARD                             pi3 | pi4 | pi5 (default: pi4)
+   DISPLAY                           display overlay name (default: waveshare35a)
+   ROTATION                          0 | 90 | 180 | 270 (default: 180)
+   FLAGS                             -c | --clean | -dc | --distclean
 
 Options:
   --board <pi3|pi4|pi5>              Target Raspberry Pi board (default: pi4)
   --display <display_name>           Display overlay name (default: waveshare35a)  
   --rotation <0|90|180|270>          Display rotation (default: 180)
+   --clean, -c                        Wipe previous Buildroot output and rebuild fresh
+   --distclean, -dc                   Remove Buildroot download cache too (implies --clean)
   --help                             Show help message
 
 Examples:
-  ./build_pi-trezor.sh --board pi4 --display waveshare35a --rotation 90
-  ./build_pi-trezor.sh --board pi5 --display hdmi --rotation 0
-  ./build_pi-trezor.sh --board pi3 --display ili9341 --rotation 270
+   # Positional usage
+   ./build_pi-trezor.sh pi4 waveshare35a 90
+   ./build_pi-trezor.sh pi5 hdmi 0 -c
+   ./build_pi-trezor.sh pi4 waveshare35a 180 -dc
+
+   # Long options (still supported)
+   ./build_pi-trezor.sh --board pi4 --display waveshare35a --rotation 90
+   ./build_pi-trezor.sh --board pi5 --display hdmi --rotation 0
+   ./build_pi-trezor.sh --board pi3 --display ili9341 --rotation 270
+
+ Clean build example:
+    ./build_pi-trezor.sh --board pi4 --display waveshare35a --rotation 180 --clean
+
+ Distclean (also clears download cache):
+    ./build_pi-trezor.sh --board pi4 --display waveshare35a --rotation 180 --distclean
+    # Note: This will re-download all sources; use only when you need a fully pristine build.
 ```
 
 ### Available Display Overlays

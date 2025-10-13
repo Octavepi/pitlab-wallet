@@ -45,15 +45,20 @@ module dejitter delta=100
 module linear
 EOF
 
-# Create default calibration file (will be updated by actual calibration)
-cat > /etc/pointercal << 'EOF'
+# Ensure persistent calibration file and symlink
+mkdir -p /var/lib/pi-trezor
+if [ ! -f /var/lib/pi-trezor/pointercal ]; then
+    # Create default calibration file (will be updated by actual calibration)
+    cat > /var/lib/pi-trezor/pointercal << 'EOF'
 -67 -912 65536 -1477 -1 45590528 65536
 EOF
+fi
+ln -sf /var/lib/pi-trezor/pointercal /etc/pointercal
 
 # Set environment variables for tslib
 cat > /etc/environment << EOF
 TSLIB_TSDEVICE=${PRIMARY_TOUCHSCREEN:-/dev/input/event0}
-TSLIB_CALIBFILE=/etc/pointercal
+TSLIB_CALIBFILE=/var/lib/pi-trezor/pointercal
 TSLIB_CONFFILE=/etc/ts.conf
 TSLIB_PLUGINDIR=/usr/lib/ts
 EOF
@@ -153,7 +158,7 @@ fi
 log_message "Pi-Trezor touchscreen setup completed successfully"
 
 # Set proper permissions
-chmod 644 /etc/ts.conf /etc/pointercal
+chmod 644 /etc/ts.conf /var/lib/pi-trezor/pointercal
 chmod 755 /usr/local/bin/calibrate-touchscreen /usr/local/bin/test-touchscreen
 
 exit 0

@@ -12,6 +12,47 @@ echo "Pi-Trezor post-build script running..."
 echo "Target directory: $TARGET_DIR"
 echo "BR2_EXTERNAL path: $BR2_EXTERNAL_PATH"
 
+# Accept selected display/touchscreen driver from environment or argument
+SELECTED_DRIVER="${PI_TREZOR_DISPLAY:-waveshare35a}"
+echo "Selected display/touchscreen driver: $SELECTED_DRIVER"
+
+# Pruning display/touchscreen modules is disabled by default to avoid breaking dependencies.
+# If you want to prune kernel modules, implement an explicit mapping from overlay to module names first.
+# echo "Module pruning skipped for safety."
+
+
+# Remove non-essential systemd services (keep only trezord, trezor-emu, touchscreen-setup, airgap-firewall, systemd core)
+if [ -d "$TARGET_DIR/etc/systemd/system" ]; then
+    for svc in $(ls "$TARGET_DIR/etc/systemd/system" | grep ".service" | grep -v -E 'trezord|trezor-emu|touchscreen-setup|airgap-firewall|systemd|local-fs|multi-user|graphical|basic|getty|journald|udevd|user-sessions|tmpfiles|sysinit|dbus|logind'); do
+        rm -f "$TARGET_DIR/etc/systemd/system/$svc"
+    done
+fi
+
+# Remove non-essential packages cautiously. Avoid blanket deletions in /usr/bin as it may contain critical symlinks (e.g., /usr/bin/env).
+# Keep /usr/bin intact to prevent breaking base utilities.
+
+# In /usr/sbin, keep core daemons and udevadm, avoid aggressive pruning.
+find "$TARGET_DIR/usr/sbin" -type f \
+    ! -name 'systemd*' \
+    ! -name 'udevd' \
+    ! -name 'udevadm' \
+    ! -name 'journald' \
+    ! -name 'logind' \
+    ! -name 'dbus-daemon' \
+    -exec rm -f {} +
+
+# In /usr/local/bin, keep Pi-Trezor binaries and touch utilities; remove anything else that sneaks in.
+find "$TARGET_DIR/usr/local/bin" -type f \
+    ! -name 'trezord' \
+    ! -name 'trezor-emu' \
+    ! -name 'touchscreen-setup.sh' \
+    ! -name 'touchscreen-calibration-once.sh' \
+    ! -name 'ts-uinput.sh' \
+    ! -name 'calibrate-touchscreen' \
+    ! -name 'test-touchscreen' \
+    ! -name 'airgap-firewall.sh' \
+    -exec rm -f {} +
+
 # Create necessary directories
 mkdir -p "$TARGET_DIR/tmp"
 mkdir -p "$TARGET_DIR/var/log"
@@ -74,16 +115,10 @@ Status:
 Connect via Trezor Suite over USB only.
 EOF
 
-# Remove any network configuration files that might exist
+# Network isolation is handled by airgap-firewall.service at runtime
+# Only remove config files at build time, service management at runtime
 rm -f "$TARGET_DIR/etc/systemd/network/"* || true
 rm -f "$TARGET_DIR/etc/wpa_supplicant/"* || true
-
-# Disable systemd networking services
-if [ -d "$TARGET_DIR/etc/systemd/system" ]; then
-    # Create mask files to completely disable network services
-    for service in networking dhcpcd wpa_supplicant systemd-networkd systemd-resolved; do
-        ln -sf /dev/null "$TARGET_DIR/etc/systemd/system/${service}.service" || true
-    done
-fi
+rm -f "$TARGET_DIR/etc/dhcpcd.conf" || true
 
 echo "Pi-Trezor post-build script completed successfully"

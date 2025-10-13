@@ -1,0 +1,17 @@
+config BR2_PACKAGE_TREZORD_GO
+	bool "trezord-go"
+	depends on BR2_PACKAGE_HOST_GO_TARGET_ARCH_SUPPORTS
+	depends on BR2_PACKAGE_HOST_GO_TARGET_CGO_LINKING_SUPPORTS
+	select BR2_PACKAGE_LIBUSB
+	select BR2_PACKAGE_LIBUDEV
+	select BR2_PACKAGE_LIBHIDAPI
+	help
+	  Trezor Bridge daemon written in Go.
+	  
+	  This provides USB communication between Trezor devices
+	  and web applications (like Trezor Suite).
+	  
+	  https://github.com/trezor/trezord-go
+
+comment "trezord-go needs a toolchain with cgo support"
+	depends on !BR2_PACKAGE_HOST_GO_TARGET_CGO_LINKING_SUPPORTS

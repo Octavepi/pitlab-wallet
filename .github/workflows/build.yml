@@ -112,7 +112,7 @@ jobs:
       with:
         path: |
           buildroot/dl
-        key: buildroot-dl-${{ runner.os }}-${{ hashFiles('configs/*_defconfig') }}
+        key: buildroot-dl-${{ runner.os }}-${{ hashFiles('br2-external/configs/*_defconfig') }}
         restore-keys: |
           buildroot-dl-${{ runner.os }}-
 
@@ -364,7 +364,7 @@ jobs:
         fi
         
         # Check for network-related code
-        if grep -r -E "(wget|curl|ssh|ftp)" --include="*.sh" --include="*.conf" configs/ overlay/ board/; then
+        if grep -r -E "(wget|curl|ssh|ftp)" --include="*.sh" --include="*.conf" br2-external/configs/ overlay/ br2-external/board/; then
           echo "⚠️  Found network-related commands in security-sensitive areas"
         else
           echo "✅ No unauthorized network commands found"
@@ -382,7 +382,7 @@ jobs:
         echo "=== Buildroot Configuration Validation ==="
         
         # Check that networking is properly disabled
-        for config in configs/pi-trezor-*_defconfig; do
+        for config in br2-external/configs/pi-trezor-*_defconfig; do
           echo "Checking $config..."
           
           # These should NOT be present (networking disabled)

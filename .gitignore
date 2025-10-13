@@ -3,6 +3,9 @@
 # Build artifacts
 buildroot/
 output/
+artifacts/
+
+# Downloaded source code (will be built during compilation)
 trezord-go/
 trezor-firmware/
 
@@ -18,6 +21,10 @@ overlay/usr/local/bin/trezor-emu
 *.temp
 *~
 .DS_Store
+
+# Build-generated files
+*.sha256
+build-info.txt
 
 # Python
 __pycache__/

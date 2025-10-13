@@ -213,21 +213,47 @@ systemctl list-units --type=service --state=running
 pi-trezor/
 ├── build_pi-trezor.sh           # Main build script
 ├── README.md                    # This file
-├── configs/                     # Buildroot configurations
+├── LICENSE                      # MIT License
+├── .gitignore                   # Git ignore rules
+├── .gitmodules                  # Buildroot submodule reference
+├── br2-external/                # Buildroot BR2_EXTERNAL tree
 │   ├── external.desc            # BR2_EXTERNAL descriptor
-│   ├── pi-trezor-pi3_defconfig  # Pi 3 configuration
-│   ├── pi-trezor-pi4_defconfig  # Pi 4 configuration
-│   ├── pi-trezor-pi5_defconfig  # Pi 5 configuration
-│   ├── kernel_touchscreen.fragment # Kernel touchscreen drivers
-│   └── busybox.fragment         # BusyBox security settings
-├── board/                       # Build scripts
-│   ├── post_build.sh            # Post-build customization
-│   └── post_image.sh            # Image finalization
+│   ├── external.mk              # External makefile includes
+│   ├── Config.in                # Buildroot package configuration
+│   ├── configs/                 # Board-specific configurations
+│   │   ├── pi-trezor-pi3_defconfig
+│   │   ├── pi-trezor-pi4_defconfig
+│   │   ├── pi-trezor-pi5_defconfig
+│   │   ├── kernel_touchscreen.fragment
+│   │   └── busybox.fragment
+│   ├── board/                   # Board-specific scripts
+│   │   ├── post_build.sh        # Post-build customization
+│   │   ├── post_image.sh        # Image finalization
+│   │   └── genimage.cfg         # SD card image layout
+│   └── package/                 # Custom Buildroot packages
+│       ├── trezord-go/          # Trezor Bridge package
+│       │   ├── Config.in
+│       │   ├── trezord-go.mk
+│       │   └── trezord.service
+│       └── trezor-firmware/     # Trezor Core emulator package
+│           ├── Config.in
+│           ├── trezor-firmware.mk
+│           └── trezor-emu.service
 ├── overlay/                     # Root filesystem overlay
-│   ├── etc/systemd/system/      # Systemd service files
-│   ├── etc/udev/rules.d/        # Udev device rules
-│   └── usr/local/bin/           # Custom scripts and binaries
+│   ├── etc/
+│   │   ├── systemd/system/      # Systemd service files
+│   │   │   ├── pi-trezor.service
+│   │   │   ├── touchscreen-setup.service
+│   │   │   ├── multi-user.target.wants/
+│   │   │   └── graphical.target.wants/
+│   │   └── udev/rules.d/        # Udev device rules
+│   │       └── 51-trezor.rules
+│   └── usr/local/bin/           # Custom scripts
+│       └── touchscreen-setup.sh
+├── scripts/                     # Utility scripts
+│   └── validate-structure.sh    # Repository validation
 └── .github/workflows/           # CI/CD automation
+    └── build.yml
 ```
 
 ### Build Process Details
@@ -276,7 +302,7 @@ pi-trezor/
 
 #### Modifying Security Settings
 
-Edit configurations in `configs/` directory:
+Edit configurations in `br2-external/configs/` directory:
 - `busybox.fragment`: BusyBox feature disable/enable
 - `kernel_touchscreen.fragment`: Kernel driver selection
 - `*_defconfig`: Buildroot package selection
@@ -294,17 +320,23 @@ Edit configurations in `configs/` directory:
    ```bash
    git checkout -b feature/your-feature-name
    ```
-3. **Test Your Changes**
+3. **Validate Repository Structure**
+   ```bash
+   ./scripts/validate-structure.sh
+   ```
+4. **Test Your Changes**
    ```bash
    ./build_pi-trezor.sh --board pi4 --display waveshare35a
    ```
-4. **Submit Pull Request**
+5. **Submit Pull Request**
 
 Please ensure your contributions:
 - Maintain air-gapped security model
 - Include documentation updates
 - Pass CI/CD validation
 - Follow existing code style
+
+For detailed contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 🛡️ Security Considerations
 

@@ -274,9 +274,13 @@ build_system() {
     export PI_TREZOR_DISPLAY=$DISPLAY
     export PI_TREZOR_ROTATION=$ROTATION
     
+    # Optimize downloads with faster primary sites
+    export BR2_PRIMARY_SITE="https://mirror.cedia.org.ec"
+    
     # Build everything with parallel compilation
     NPROC=$(nproc)
     log_info "Starting Buildroot build process with $NPROC parallel jobs (this may take a while)..."
+    log_info "Using optimized download mirrors for faster builds..."
     make -j$NPROC all O="${BR_OUTPUT_DIR}"
     
     cd ..

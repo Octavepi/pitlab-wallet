@@ -28,4 +28,4 @@ CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW
 SyslogIdentifier=airgap-firewall
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

@@ -32,7 +32,7 @@ define TREZORD_GO_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_PITLAB_WALLET_PATH)/package/trezord-go/trezord.service \
 		$(TARGET_DIR)/etc/systemd/system/trezord.service
 	ln -sf ../trezord.service \
-		$(TARGET_DIR)/etc/systemd/system/multi-user.target.wants/trezord.service
+		$(TARGET_DIR)/etc/systemd/system/default.target.wants/trezord.service
 endef
 
 $(eval $(golang-package))

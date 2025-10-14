@@ -26,7 +26,7 @@ define TREZOR_EMU_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_PITLAB_WALLET_PATH)/package/trezor-emu/trezor-emu.service \
 		$(TARGET_DIR)/etc/systemd/system/trezor-emu.service
 	ln -sf ../trezor-emu.service \
-		$(TARGET_DIR)/etc/systemd/system/multi-user.target.wants/trezor-emu.service
+		$(TARGET_DIR)/etc/systemd/system/default.target.wants/trezor-emu.service
 endef
 
 $(eval $(generic-package))

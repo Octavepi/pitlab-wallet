@@ -10,4 +10,4 @@ ExecStart=/usr/local/bin/ts-uinput.sh
 Restart=on-failure
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

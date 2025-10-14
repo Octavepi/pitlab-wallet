@@ -38,4 +38,4 @@ Environment=TSLIB_PLUGINDIR=/usr/lib/ts
 SyslogIdentifier=trezor-emu
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

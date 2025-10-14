@@ -32,6 +32,24 @@ This script is useful for:
 - `0`: All checks passed
 - `1`: One or more checks failed
 
+### optimize_downloads.sh
+
+Optimizes Buildroot source downloads and adds fallback mirrors for faster builds.
+
+**Usage:**
+```bash
+./scripts/optimize_downloads.sh [--prefetch]
+```
+
+**Features:**
+- Creates an optimized `.wgetrc` for faster downloads
+- Optionally pre-fetches all Buildroot sources
+- Adds fallback mirrors for common packages
+
+This script is useful for:
+- Improving build speed
+- Avoiding download delays during Buildroot compilation
+
 ## Future Scripts
 
 Additional utility scripts may be added here for:

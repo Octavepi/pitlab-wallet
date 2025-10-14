@@ -1,0 +1,22 @@
+# Pi-Trezor Minimal Configuration Fragment
+# Apply these changes to reduce build time and image size
+
+# Disable debugging tools (safe for production)
+# BR2_PACKAGE_EVTEST is not set
+# BR2_PACKAGE_INPUTATTACH is not set
+
+# Disable optional Python bytecode compilation
+# BR2_PACKAGE_PYTHON3_PY_PYC is not set
+
+# Disable optional host tools (only needed during build)
+# BR2_PACKAGE_HOST_ISL is not set
+
+# Keep essential tools enabled (these are critical):
+# BR2_PACKAGE_LIBUSB=y          # Critical for Trezor USB
+# BR2_PACKAGE_LIBUDEV=y         # Critical for device detection
+# BR2_PACKAGE_LIBHIDAPI=y       # Critical for HID devices
+# BR2_PACKAGE_TSLIB=y           # Critical for touchscreen
+# BR2_PACKAGE_PYTHON3=y         # Critical for Trezor Core
+# BR2_PACKAGE_HOST_GO=y         # Critical for trezord-go
+# BR2_PACKAGE_TREZORD_GO=y      # Critical for Pi-Trezor
+# BR2_PACKAGE_TREZOR_FIRMWARE=y # Critical for Pi-Trezor

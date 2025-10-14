@@ -1,1 +1,1 @@
-include $(sort $(wildcard $(BR2_EXTERNAL_PI_TREZOR_PATH)/package/*/*.mk))
+include $(sort $(wildcard $(BR2_EXTERNAL_PITLAB_WALLET_PATH)/package/*/*.mk))

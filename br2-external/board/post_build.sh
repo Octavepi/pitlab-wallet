@@ -13,7 +13,7 @@ echo "Target directory: $TARGET_DIR"
 echo "BR2_EXTERNAL path: $BR2_EXTERNAL_PATH"
 
 # Accept selected display/touchscreen driver from environment or argument
-SELECTED_DRIVER="${PI_TREZOR_DISPLAY:-waveshare35a}"
+SELECTED_DRIVER="${PITLAB_WALLET_DISPLAY:-waveshare35a}"
 echo "Selected display/touchscreen driver: $SELECTED_DRIVER"
 
 # Pruning display/touchscreen modules is disabled by default to avoid breaking dependencies.

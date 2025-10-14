@@ -9,9 +9,9 @@ IMAGES_DIR="$1"
 BR2_EXTERNAL_PATH="$2"
 
 # Get environment variables set by build script
-BOARD="${PI_TREZOR_BOARD:-pi4}"
-DISPLAY="${PI_TREZOR_DISPLAY:-waveshare35a}"
-ROTATION="${PI_TREZOR_ROTATION:-180}"
+BOARD="${PITLAB_WALLET_BOARD:-pi4}"
+DISPLAY="${PITLAB_WALLET_DISPLAY:-waveshare35a}"
+ROTATION="${PITLAB_WALLET_ROTATION:-180}"
 
 echo "PitLab Wallet post-image script running..."
 echo "Images directory: $IMAGES_DIR"

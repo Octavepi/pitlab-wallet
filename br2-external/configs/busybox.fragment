@@ -17,6 +17,7 @@
 # CONFIG_TRACEROUTE is not set
 # CONFIG_TRACEROUTE6 is not set
 # CONFIG_ROUTE is not set
+# CONFIG_TC is not set
 
 # Disable potentially dangerous system utilities
 # CONFIG_ADDGROUP is not set

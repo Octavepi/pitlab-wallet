@@ -268,9 +268,9 @@ build_system() {
     cd buildroot
     
     # Export environment variables for post-build scripts
-    export PI_TREZOR_BOARD=$BOARD
-    export PI_TREZOR_DISPLAY=$DISPLAY
-    export PI_TREZOR_ROTATION=$ROTATION
+    export PITLAB_WALLET_BOARD=$BOARD
+    export PITLAB_WALLET_DISPLAY=$DISPLAY
+    export PITLAB_WALLET_ROTATION=$ROTATION
     
     # Optimize downloads with faster primary sites
     export BR2_PRIMARY_SITE="https://mirror.cedia.org.ec"
@@ -309,7 +309,7 @@ copy_output() {
 cleanup() {
     log_step "Cleaning up..."
     unset CGO_ENABLED GOOS GOARCH GOARM CC
-    unset PI_TREZOR_BOARD PI_TREZOR_DISPLAY PI_TREZOR_ROTATION
+    unset PITLAB_WALLET_BOARD PITLAB_WALLET_DISPLAY PITLAB_WALLET_ROTATION
 }
 
 # Main execution

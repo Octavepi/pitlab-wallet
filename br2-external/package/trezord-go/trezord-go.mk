@@ -9,7 +9,7 @@ TREZORD_GO_SITE = $(call github,trezor,trezord-go,$(TREZORD_GO_VERSION))
 TREZORD_GO_LICENSE = LGPL-3.0
 TREZORD_GO_LICENSE_FILES = COPYING
 
-TREZORD_GO_DEPENDENCIES = host-go libusb libudev libhidapi
+TREZORD_GO_DEPENDENCIES = host-go libusb libudev hidapi
 
 # Build with Go
 TREZORD_GO_GOPATH = $(@D)/_gopath

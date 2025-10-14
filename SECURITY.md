@@ -131,7 +131,6 @@ PitLab Wallet aims for reproducible builds to enable verification:
 1. **Fixed Versions**
    - Buildroot: `2024.02.x` branch
    - Trezord-go: Tagged release versions
-   - Trezor-firmware: Tagged release versions
 
 2. **Verifying Builds**
    ```bash

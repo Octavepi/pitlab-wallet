@@ -7,7 +7,6 @@ artifacts/
 
 # Downloaded source code (will be built during compilation)
 trezord-go/
-trezor-firmware/
 
 # Compiled binaries (will be built during compilation)
 overlay/usr/local/bin/trezord

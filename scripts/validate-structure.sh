@@ -79,10 +79,7 @@ check_file "br2-external/package/trezord-go/Config.in"
 check_file "br2-external/package/trezord-go/trezord-go.mk"
 check_file "br2-external/package/trezord-go/trezord.service"
 
-check_dir "br2-external/package/trezor-firmware"
-check_file "br2-external/package/trezor-firmware/Config.in"
-check_file "br2-external/package/trezor-firmware/trezor-firmware.mk"
-check_file "br2-external/package/trezor-firmware/trezor-emu.service"
+echo "Trezor firmware checks removed."
 
 echo
 echo "Checking overlay structure..."

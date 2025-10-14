@@ -52,7 +52,7 @@ The project uses Buildroot's BR2_EXTERNAL mechanism:
 
 - **`br2-external/`**: Buildroot external tree
   - `configs/`: Board-specific defconfig files
-  - `package/`: Custom package definitions (trezord-go, trezor-firmware)
+  - `package/`: Custom package definitions (trezord-go, trezor-emu)
   - `board/`: Build scripts (post_build.sh, post_image.sh)
 - **`overlay/`**: Root filesystem overlay (systemd services, udev rules, scripts)
 - **`build.sh`**: Main build orchestration script
@@ -71,9 +71,6 @@ The project uses Buildroot's BR2_EXTERNAL mechanism:
 - Update version in `trezord-go.mk`
 - Rebuild: `cd buildroot && make trezord-go-rebuild`
 
-**trezor-firmware package** (`br2-external/package/trezor-firmware/`):
-- Update version in `trezor-firmware.mk`
-- Rebuild: `cd buildroot && make trezor-firmware-rebuild`
 
 ### Security-Sensitive Changes
 

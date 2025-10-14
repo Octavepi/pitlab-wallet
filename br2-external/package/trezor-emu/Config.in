@@ -1,0 +1,5 @@
+config BR2_PACKAGE_TREZOR_EMU
+	bool "Trezor Core Emulator"
+	help
+	  Trezor Core Emulator for air-gapped wallet operation.
+	  Installs the trezor-emu binary and systemd service.

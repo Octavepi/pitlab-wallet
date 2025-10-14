@@ -13,7 +13,6 @@ PitLab Wallet is a security-focused, air-gapped cryptocurrency hardware wallet b
 This project makes use of the following third-party sources, libraries, and upstream projects:
 
 - Buildroot (https://buildroot.org/)
-- Trezor Core (https://github.com/trezor/trezor-firmware)
 - trezord-go (https://github.com/trezor/trezord-go)
 - Raspberry Pi Linux kernel overlays (https://github.com/raspberrypi/linux)
 
@@ -314,9 +313,7 @@ systemctl list-units --type=service --state=running
 │       │   ├── Config.in
 │       │   ├── trezord-go.mk
 │       │   └── trezord.service
-│       └── trezor-firmware/     # Trezor Core emulator package
 │           ├── Config.in
-│           ├── trezor-firmware.mk
 │           └── trezor-emu.service
 ├── overlay/                     # Root filesystem overlay
 │   ├── etc/
@@ -344,7 +341,6 @@ systemctl list-units --type=service --state=running
 
 2. **Source Code Compilation**
    - `trezord-go`: Cross-compiled Go binary for ARM/ARM64
-   - `trezor-firmware`: Core emulator compiled for target architecture
    - Custom scripts and configurations
 
 3. **Buildroot System Assembly**

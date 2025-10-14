@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Pi-Trezor Build System - Dynamic Multi-Board & Display Support
+# PitLab Wallet Build System - Dynamic Multi-Board & Display Support
 # Builds an air-gapped Raspberry Pi wallet appliance with Trezor Core and trezord-go
 
 set -e
@@ -40,7 +40,7 @@ log_step() {
 # Help function
 show_help() {
     cat << EOF
-Pi-Trezor Build System - Dynamic Multi-Board & Display Support
+ PitLab Wallet Build System - Dynamic Multi-Board & Display Support
 
 Usage: $0 [OPTIONS]
 
@@ -149,7 +149,7 @@ case $ROTATION in
         ;;
 esac
 
-log_info "Building Pi-Trezor for $BOARD with $DISPLAY display (rotation: $ROTATION°)"
+log_info "Building PitLab Wallet for $BOARD with $DISPLAY display (rotation: $ROTATION°)"
 
 # Derive per-config Buildroot output directory (relative to buildroot/)
 OUTPUT_SUFFIX="${BOARD}_${DISPLAY}_${ROTATION}"
@@ -189,27 +189,25 @@ check_host_deps() {
 check_host_deps
 
 # Check if we're in the right directory
-if [[ ! -f "build_pi-trezor.sh" ]]; then
-    log_error "Please run this script from the pi-trezor repository root"
+if [[ ! -f "build.sh" ]]; then
+    log_error "Please run this script from the repository root (where build.sh resides)"
     exit 1
 fi
 
-# Initialize Buildroot submodule if needed
+# Download and extract Buildroot tarball if needed
 setup_buildroot() {
     log_step "Setting up Buildroot..."
-    
-    if [[ ! -f "buildroot/Makefile" ]]; then
-        log_info "Initializing Buildroot submodule..."
-        git submodule update --init --recursive buildroot
-        cd buildroot
-        # Use a stable release branch
-        git checkout 2024.02.x
-        cd ..
+    BUILDROOT_VERSION="2024.02"
+    BUILDROOT_TARBALL="buildroot-${BUILDROOT_VERSION}.tar.gz"
+    BUILDROOT_URL="https://buildroot.org/downloads/${BUILDROOT_TARBALL}"
+    if [[ ! -d "buildroot" ]]; then
+        log_info "Downloading Buildroot ${BUILDROOT_VERSION} release tarball..."
+        wget -O "$BUILDROOT_TARBALL" "$BUILDROOT_URL"
+        tar -xzf "$BUILDROOT_TARBALL"
+        mv "buildroot-${BUILDROOT_VERSION}" buildroot
+        rm "$BUILDROOT_TARBALL"
     else
-        log_info "Buildroot submodule already initialized"
-        cd buildroot
-        git checkout 2024.02.x
-        cd ..
+        log_info "Buildroot directory already exists"
     fi
 }
 
@@ -316,7 +314,7 @@ cleanup() {
 
 # Main execution
 main() {
-    log_info "Pi-Trezor Build System starting..."
+    log_info "PitLab Wallet Build System starting..."
     log_info "Target: $BOARD | Display: $DISPLAY | Rotation: $ROTATION°"
     
     trap cleanup EXIT

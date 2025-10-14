@@ -1,6 +1,6 @@
-# Pi-Trezor Scripts
+# PitLab Wallet Scripts
 
-This directory contains utility scripts for the Pi-Trezor project.
+This directory contains utility scripts for the PitLab Wallet project.
 
 ## Available Scripts
 
@@ -18,6 +18,21 @@ Validates the repository structure to ensure all required files and directories 
 - BR2_EXTERNAL directory structure
 - Package definitions
 - Overlay files and directories
+
+### optimize_downloads.sh
+
+Optimizes download speeds and reliability by configuring wget with better timeouts, retry logic, and fallback mirrors.
+
+**Usage:**
+```bash
+./scripts/optimize_downloads.sh [--prefetch]
+```
+
+**Features:**
+- Creates optimized `.wgetrc` configuration for faster downloads
+- Pre-fetches all source packages when `--prefetch` is used
+- Improves reliability for slow or unreliable connections
+- Reduces build interruptions due to download failures
 - CI/CD configuration
 - File permissions
 - No duplicate configuration files

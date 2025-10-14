@@ -1,6 +1,7 @@
+
 MIT License
 
-Copyright (c) 2025 Pi-Trezor Contributors
+Copyright (c) 2025 PitLab Wallet Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -12,6 +13,11 @@ furnished to do so, subject to the following conditions:
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
+Strict Contribution Policy:
+- All contributions require explicit approval by the repository owner.
+- All proposed changes will be audited for security before merging.
+- Contributors must adhere to the project's Code of Conduct (see CODE_OF_CONDUCT.md).
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -19,3 +25,19 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+---
+Additional Terms for PitLab Wallet (pitlab-wallet):
+
+1. Acknowledgement Requirement:
+	- If you fork, redistribute, or use this project (PitLab Wallet) or substantial portions thereof, you MUST provide clear and visible acknowledgement to the original author (Octavepi) and the PitLab Wallet project in your documentation, user interface, and/or distribution materials.
+	- This acknowledgement must include the project name, original repository URL, and author attribution.
+
+2. Third-Party Sources:
+	- All third-party sources, libraries, or code used in this project are listed in the README under "Acknowledgements". You MUST preserve these acknowledgements in any forks, redistributions, or derivative works.
+
+3. Contributions:
+	- All contributions require explicit approval and a security audit. See CONTRIBUTING.md and CODE_OF_CONDUCT.md for details.
+
+4. Code of Conduct:
+	- All users and contributors must adhere to the project's code of conduct. See CODE_OF_CONDUCT.md.
+---

@@ -1,10 +1,10 @@
-# Contributing to Pi-Trezor
+# Contributing to PitLab Wallet
 
-Thank you for your interest in contributing to Pi-Trezor! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to PitLab Wallet! This document provides guidelines and information for contributors.
 
 ## 🎯 Project Goals
 
-Pi-Trezor aims to provide a **reproducible, secure, air-gapped hardware wallet appliance** based on:
+PitLab Wallet aims to provide a **reproducible, secure, air-gapped hardware wallet appliance** based on:
 - Trezor Core (emulator) for wallet functionality
 - trezord-go bridge for USB communication with Trezor Suite
 - Minimal Buildroot-based Linux OS
@@ -35,15 +35,15 @@ Pi-Trezor aims to provide a **reproducible, secure, air-gapped hardware wallet a
   - Linux systemd services
   - Cross-compilation
 
-### Building from Source
+### Building PitLab Wallet from Source
 
 ```bash
-# Clone with submodules
-git clone --recursive https://github.com/Octavepi/pi-trezor.git
+# Clone the repo
+git clone https://github.com/Octavepi/pi-trezor.git
 cd pi-trezor
 
 # Run the build
-./build_pi-trezor.sh --board pi4 --display waveshare35a
+./build.sh --board pi4 --display waveshare35a
 ```
 
 ### Repository Structure
@@ -55,7 +55,7 @@ The project uses Buildroot's BR2_EXTERNAL mechanism:
   - `package/`: Custom package definitions (trezord-go, trezor-firmware)
   - `board/`: Build scripts (post_build.sh, post_image.sh)
 - **`overlay/`**: Root filesystem overlay (systemd services, udev rules, scripts)
-- **`build_pi-trezor.sh`**: Main build orchestration script
+- **`build.sh`**: Main build orchestration script
 
 ## 🔧 Making Changes
 
@@ -141,7 +141,7 @@ By contributing, you agree that your contributions will be licensed under the sa
 
 ## 🙏 Acknowledgments
 
-Pi-Trezor builds upon the excellent work of:
+PitLab Wallet builds upon the excellent work of:
 - [Trezor](https://trezor.io/) - Hardware wallet firmware and bridge
 - [Buildroot](https://buildroot.org/) - Embedded Linux build system
 - [Raspberry Pi](https://www.raspberrypi.org/) - Affordable hardware platform
@@ -154,4 +154,4 @@ Pi-Trezor builds upon the excellent work of:
 
 ---
 
-Thank you for helping make Pi-Trezor better! 🚀
+Thank you for helping make PitLab Wallet better! 🚀

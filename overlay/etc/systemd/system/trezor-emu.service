@@ -1,5 +1,5 @@
 [Unit]
-Description=Trezor Core Emulator
+Description=Trezor Core Emulator (PitLab Wallet)
 Documentation=https://github.com/trezor/trezor-firmware
 After=trezord.service ts-uinput.service touchscreen-calibration-once.service
 Requires=trezord.service

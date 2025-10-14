@@ -1,5 +1,5 @@
 [Unit]
-Description=Pi-Trezor Air-Gap Firewall Enforcement
+Description=PitLab Wallet Air-Gap Firewall Enforcement
 Documentation=man:iptables(8)
 After=local-fs.target
 Before=network.target

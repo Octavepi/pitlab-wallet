@@ -1,9 +1,23 @@
-# Pi-Trezor: Air-Gapped Hardware Wallet Appliance
+# PitLab Wallet: Air-Gapped Hardware Wallet Appliance
 
-[![Build Status](https://github.com/Octavepi/pi-trezor/workflows/Build/badge.svg)](https://github.com/Octavepi/pi-trezor/actions)
+[![Build Status](https://github.com/Octavepi/pi-trezor/actions/workflows/build.yml/badge.svg)](https://github.com/Octavepi/pi-trezor/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Pi-Trezor is a reproducible, air-gapped Raspberry Pi appliance that runs Trezor Core (emulator) and trezord-go bridge on a minimal Buildroot-based OS. It provides hardware wallet functionality with touchscreen support and integrates seamlessly with Trezor Suite over USB.
+# PitLab Wallet
+
+**An air-gapped hardware wallet appliance for Raspberry Pi**
+
+PitLab Wallet is a security-focused, air-gapped cryptocurrency hardware wallet built on Raspberry Pi, running Trezor Core (emulator) and trezord-go bridge on a minimal Buildroot-based operating system.
+## Acknowledgements
+
+This project makes use of the following third-party sources, libraries, and upstream projects:
+
+- Buildroot (https://buildroot.org/)
+- Trezor Core (https://github.com/trezor/trezor-firmware)
+- trezord-go (https://github.com/trezor/trezord-go)
+- Raspberry Pi Linux kernel overlays (https://github.com/raspberrypi/linux)
+
+If you fork, redistribute, or create derivative works from PitLab Wallet, you MUST preserve this acknowledgement section and provide clear attribution to the original author (Octavepi) and the PitLab Wallet project, including the repository URL.
 
 ## 🔐 Security Features
 
@@ -13,6 +27,7 @@ Pi-Trezor is a reproducible, air-gapped Raspberry Pi appliance that runs Trezor 
 - **Hardware Security**: Leverages Raspberry Pi security features
 - **USB-Only Communication**: Connect only to Trezor Suite via USB
 - **Reproducible Builds**: Deterministic build process for verification
+- **Passphrase/Passcode Key Storage Protection**: Trezor emulator supports passphrase (or PIN) protection for wallet keys. This **must** be enabled—otherwise, anyone with access to your SD card can recover your keys. Always use a strong passphrase or PIN for maximum security.
 
 ## 🎯 Supported Hardware
 
@@ -45,9 +60,9 @@ Pi-Trezor is a reproducible, air-gapped Raspberry Pi appliance that runs Trezor 
 - 20GB+ free disk space
 - Internet connection (for initial dependencies and source code)
 
-### Build Your Pi-Trezor
+### Build Your PitLab Wallet
 
-1. **Clone the Repository**
+1. **Clone the Repository (PitLab Wallet)**
    ```bash
    git clone https://github.com/Octavepi/pi-trezor.git
    cd pi-trezor
@@ -62,16 +77,31 @@ Pi-Trezor is a reproducible, air-gapped Raspberry Pi appliance that runs Trezor 
 3. **Build for Your Hardware**
    ```bash
    # Raspberry Pi 4 with Waveshare 3.5" display (default configuration)
-   ./build_pi-trezor.sh
+   ./build.sh
    
    # Raspberry Pi 5 with HDMI display
-   ./build_pi-trezor.sh --board pi5 --display hdmi --rotation 0
+   ./build.sh --board pi5 --display hdmi --rotation 0
    
    # Raspberry Pi 3 with ILI9341 display, 270° rotation
-   ./build_pi-trezor.sh --board pi3 --display ili9341 --rotation 270
+   ./build.sh --board pi3 --display ili9341 --rotation 270
    ```
 
 3. **Flash to SD Card**
+
+   **Option A: Using Balena Etcher (Recommended)**
+   1. Download [Balena Etcher](https://www.balena.io/etcher/) for your operating system
+   2. Install and launch Etcher
+   3. Click "Flash from file" and select `output/images/sdcard.img`
+   4. Click "Select target" and choose your SD card
+   5. Click "Flash!" and wait for completion
+   
+   **Option B: Using Raspberry Pi Imager**
+   1. Download [Raspberry Pi Imager](https://www.raspberrypi.org/software/)
+   2. Install and launch the imager
+   3. Click "Use custom" and select `output/images/sdcard.img`
+   4. Choose your SD card and click "Write"
+   
+   **Option C: Using dd (Linux/macOS)**
    ```bash
    # Find your SD card device (e.g., /dev/sdb, /dev/mmcblk0)
    lsblk
@@ -81,7 +111,7 @@ Pi-Trezor is a reproducible, air-gapped Raspberry Pi appliance that runs Trezor 
    sudo sync
    ```
 
-4. **Boot Your Pi-Trezor**
+4. **Boot Your PitLab Wallet**
    - Insert the SD card into your Raspberry Pi
    - Connect your display (if not HDMI)
    - Power on the Pi
@@ -92,7 +122,7 @@ Pi-Trezor is a reproducible, air-gapped Raspberry Pi appliance that runs Trezor 
 ### Command Line Arguments
 
 ```bash
-./build_pi-trezor.sh [BOARD] [DISPLAY] [ROTATION] [FLAGS]
+./build.sh [BOARD] [DISPLAY] [ROTATION] [FLAGS]
 
 Positional:
    BOARD                             pi3 | pi4 | pi5 (default: pi4)
@@ -101,29 +131,30 @@ Positional:
    FLAGS                             -c | --clean | -dc | --distclean
 
 Options:
-  --board <pi3|pi4|pi5>              Target Raspberry Pi board (default: pi4)
-  --display <display_name>           Display overlay name (default: waveshare35a)  
-  --rotation <0|90|180|270>          Display rotation (default: 180)
+   --board <pi3|pi4|pi5>              Target Raspberry Pi board (default: pi4)
+   --display <display_name>           Display overlay name (default: waveshare35a)  
+   --rotation <0|90|180|270>          Display rotation (default: 180)
    --clean, -c                        Wipe previous Buildroot output and rebuild fresh
    --distclean, -dc                   Remove Buildroot download cache too (implies --clean)
-  --help                             Show help message
+   --prefetch                         Prefetch all sources for offline/air-gapped builds
+   --help                             Show help message
 
 Examples:
    # Positional usage
-   ./build_pi-trezor.sh pi4 waveshare35a 90
-   ./build_pi-trezor.sh pi5 hdmi 0 -c
-   ./build_pi-trezor.sh pi4 waveshare35a 180 -dc
+   ./build.sh pi4 waveshare35a 90
+   ./build.sh pi5 hdmi 0 -c
+   ./build.sh pi4 waveshare35a 180 -dc
 
    # Long options (still supported)
-   ./build_pi-trezor.sh --board pi4 --display waveshare35a --rotation 90
-   ./build_pi-trezor.sh --board pi5 --display hdmi --rotation 0
-   ./build_pi-trezor.sh --board pi3 --display ili9341 --rotation 270
+   ./build.sh --board pi4 --display waveshare35a --rotation 90
+   ./build.sh --board pi5 --display hdmi --rotation 0
+   ./build.sh --board pi3 --display ili9341 --rotation 270
 
  Clean build example:
-    ./build_pi-trezor.sh --board pi4 --display waveshare35a --rotation 180 --clean
+    ./build.sh --board pi4 --display waveshare35a --rotation 180 --clean
 
  Distclean (also clears download cache):
-    ./build_pi-trezor.sh --board pi4 --display waveshare35a --rotation 180 --distclean
+    ./build.sh --board pi4 --display waveshare35a --rotation 180 --distclean
     # Note: This will re-download all sources; use only when you need a fully pristine build.
 ```
 
@@ -142,12 +173,34 @@ The system supports any display overlay provided by the Raspberry Pi firmware. C
 | HDMI | `hdmi` | Standard HDMI output |
 | VC4 KMS | `vc4-kms-v3d` | Modern DRM/KMS driver |
 
+
+### Offline/Air-Gapped Build Workflow
+
+To support fully reproducible, offline builds, you can prefetch all required source tarballs and packages on a networked machine, then build on an air-gapped system:
+
+1. **Prefetch Sources** (networked machine):
+   ```sh
+   ./build.sh --prefetch --board pi4 --display waveshare35a --rotation 180
+   ```
+   This downloads all sources to `buildroot/dl/` for the selected board/display/rotation.
+
+2. **Transfer Download Cache**:
+   Copy the entire `buildroot/dl/` directory to your air-gapped build machine.
+
+3. **Build Offline** (air-gapped machine):
+   ```sh
+   ./build.sh --board pi4 --display waveshare35a --rotation 180
+   ```
+   The build will complete with no network access required.
+
+This workflow ensures all sources are fetched as tarballs and supports fully reproducible, offline builds for maximum security.
+
 ## 🔧 Usage Guide
 
 ### First Boot Setup
 
 1. **System Initialization**
-   - Pi-Trezor boots automatically to a console
+   - PitLab Wallet boots automatically to a console
    - Touchscreen calibration may be required
    - Trezor services start automatically
 
@@ -179,9 +232,9 @@ The system supports any display overlay provided by the Raspberry Pi firmware. C
    - Download from [trezor.io/trezor-suite](https://trezor.io/trezor-suite)
    - Install on Windows, macOS, or Linux
 
-2. **Connect Pi-Trezor**
+2. **Connect PitLab Wallet**
    - Use a USB cable to connect Pi to your computer
-   - Pi-Trezor appears as a Trezor device
+   - PitLab Wallet appears as a Trezor device
    - No additional drivers needed
 
 3. **Initialize Wallet**
@@ -237,12 +290,11 @@ systemctl list-units --type=service --state=running
 ### Repository Structure
 
 ```
-pi-trezor/
-├── build_pi-trezor.sh           # Main build script
+./
+├── build.sh           # Main build script
 ├── README.md                    # This file
 ├── LICENSE                      # MIT License
 ├── .gitignore                   # Git ignore rules
-├── .gitmodules                  # Buildroot submodule reference
 ├── br2-external/                # Buildroot BR2_EXTERNAL tree
 │   ├── external.desc            # BR2_EXTERNAL descriptor
 │   ├── external.mk              # External makefile includes
@@ -319,7 +371,7 @@ pi-trezor/
 
 2. **Use Custom Overlay Name**
    ```bash
-   ./build_pi-trezor.sh --display your-overlay-name
+   ./build.sh --display your-overlay-name
    ```
 
 3. **Test Display Configuration**
@@ -353,7 +405,7 @@ Edit configurations in `br2-external/configs/` directory:
    ```
 4. **Test Your Changes**
    ```bash
-   ./build_pi-trezor.sh --board pi4 --display waveshare35a
+   ./build.sh --board pi4 --display waveshare35a
    ```
 5. **Submit Pull Request**
 
@@ -369,7 +421,7 @@ For detailed contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### Air-Gap Verification
 
-Pi-Trezor is designed to be completely offline. Verify air-gap status:
+PitLab Wallet is designed to be completely offline. Verify air-gap status:
 
 ```bash
 # Check for network interfaces (should show only 'lo')
@@ -425,14 +477,14 @@ rfkill list all
 ```bash
 # Solution: Update host system and retry
 sudo apt update && sudo apt upgrade
-./build_pi-trezor.sh --board pi4
+./build.sh --board pi4
 ```
 
 **Problem**: Cross-compilation errors
 ```bash
 # Solution: Clean build environment
 rm -rf buildroot/output
-./build_pi-trezor.sh --board pi4
+./build.sh --board pi4
 ```
 
 #### Display Issues
@@ -502,7 +554,7 @@ curl http://127.0.0.1:21325/
    ```bash
    # Create debug report
    {
-     echo "=== Pi-Trezor Debug Report ==="
+     echo "=== PitLab Wallet Debug Report ==="
      echo "Date: $(date)"
      echo "Board: $(cat /proc/cpuinfo | grep Model)"
      echo "Kernel: $(uname -a)"
@@ -534,7 +586,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## ⚠️ Disclaimer
 
-Pi-Trezor is provided as-is for educational and experimental purposes. While designed with security in mind, no cryptocurrency wallet can be 100% secure. Users assume all risks associated with cryptocurrency storage and transactions. Always verify transactions on the device display and maintain proper security practices.
+PitLab Wallet is provided as-is for educational and experimental purposes. While designed with security in mind, no cryptocurrency wallet can be 100% secure. Users assume all risks associated with cryptocurrency storage and transactions. Always verify transactions on the device display and maintain proper security practices.
 
 For production use with significant funds, consider official Trezor hardware wallets from [trezor.io](https://trezor.io).
 

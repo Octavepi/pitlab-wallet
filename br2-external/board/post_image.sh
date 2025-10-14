@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Pi-Trezor post-image script
+# PitLab Wallet post-image script
 # Dynamically configures display overlays and finalizes the SD card image
 
 set -e
@@ -13,7 +13,7 @@ BOARD="${PI_TREZOR_BOARD:-pi4}"
 DISPLAY="${PI_TREZOR_DISPLAY:-waveshare35a}"
 ROTATION="${PI_TREZOR_ROTATION:-180}"
 
-echo "Pi-Trezor post-image script running..."
+echo "PitLab Wallet post-image script running..."
 echo "Images directory: $IMAGES_DIR"
 echo "Board: $BOARD"
 echo "Display: $DISPLAY"  
@@ -27,7 +27,7 @@ mkdir -p "$IMAGES_DIR/rpi-firmware"
 
 # Create basic config.txt
 cat > "$IMAGES_DIR/config.txt" << EOF
-# Pi-Trezor Configuration
+# PitLab Wallet Configuration
 # Generated for $BOARD with $DISPLAY display
 
 # Basic Pi configuration
@@ -122,7 +122,7 @@ fi
 
 # Create a summary file
 cat > "$IMAGES_DIR/build-info.txt" << EOF
-Pi-Trezor Build Information
+PitLab Wallet Build Information
 ==========================
 
 Build Date: $(date)
@@ -142,4 +142,4 @@ sudo dd if=sdcard.img of=/dev/sdX bs=4M status=progress
 Note: This is an air-gapped system. Do not connect to networks.
 EOF
 
-echo "Pi-Trezor post-image script completed successfully"
+echo "PitLab Wallet post-image script completed successfully"

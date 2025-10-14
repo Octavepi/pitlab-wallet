@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Pi-Trezor post-build script
+# PitLab Wallet post-build script
 # This script runs after the root filesystem is built but before creating the final image
 
 set -e
@@ -8,7 +8,7 @@ set -e
 TARGET_DIR="$1"
 BR2_EXTERNAL_PATH="$2"
 
-echo "Pi-Trezor post-build script running..."
+echo "PitLab Wallet post-build script running..."
 echo "Target directory: $TARGET_DIR"
 echo "BR2_EXTERNAL path: $BR2_EXTERNAL_PATH"
 
@@ -41,7 +41,7 @@ find "$TARGET_DIR/usr/sbin" -type f \
     ! -name 'dbus-daemon' \
     -exec rm -f {} +
 
-# In /usr/local/bin, keep Pi-Trezor binaries and touch utilities; remove anything else that sneaks in.
+# In /usr/local/bin, keep PitLab Wallet binaries and touch utilities; remove anything else that sneaks in.
 find "$TARGET_DIR/usr/local/bin" -type f \
     ! -name 'trezord' \
     ! -name 'trezor-emu' \
@@ -63,7 +63,7 @@ mkdir -p "$TARGET_DIR/dev"
 # Set up tmpfs mount points in fstab
 cat >> "$TARGET_DIR/etc/fstab" << EOF
 
-# Pi-Trezor tmpfs mounts for security
+# PitLab Wallet tmpfs mounts for security
 tmpfs /tmp tmpfs defaults,nodev,nosuid,noexec,size=64M 0 0
 tmpfs /var/log tmpfs defaults,nodev,nosuid,noexec,size=32M 0 0
 tmpfs /run tmpfs defaults,nodev,nosuid,noexec,size=32M 0 0
@@ -76,7 +76,7 @@ echo 'trezor:x:1000:' >> "$TARGET_DIR/etc/group"
 # Set proper ownership for trezor directories
 chown -R 1000:1000 "$TARGET_DIR/var/lib/trezor" || true
 
-# Ensure proper permissions for Pi-Trezor binaries
+# Ensure proper permissions for PitLab Wallet binaries
 if [ -f "$TARGET_DIR/usr/local/bin/trezord" ]; then
     chmod 755 "$TARGET_DIR/usr/local/bin/trezord"
     chown root:root "$TARGET_DIR/usr/local/bin/trezord"
@@ -92,16 +92,12 @@ sed -i 's/^root:[^:]*:/root:*:/' "$TARGET_DIR/etc/shadow" || true
 
 # Create a simple motd
 cat > "$TARGET_DIR/etc/motd" << 'EOF'
- ____  _   _____                          
-|  _ \(_) |_   _| __ ___ _______ _ __ 
-| |_) | |   | || '__/ _ \_  / _ \ '__|
-|  __/| |   | || | |  __// / (_) | |   
-|_|   |_|   |_||_|  \___/___\___/|_|   
+PitLab Wallet
+=============
 
 Air-Gapped Hardware Wallet Appliance
-=====================================
 
-This is a Pi-Trezor system running Trezor Core emulator
+This is a PitLab Wallet system running Trezor Core emulator
 and trezord-go bridge for secure cryptocurrency operations.
 
 ⚠️  This system is designed to be completely air-gapped.
@@ -129,4 +125,4 @@ done
 # Enable splash service at boot
 ln -sf ../pi-trezor-splash.service "$TARGET_DIR/etc/systemd/system/graphical.target.wants/pi-trezor-splash.service"
 
-echo "Pi-Trezor post-build script completed successfully"
+echo "PitLab Wallet post-build script completed successfully"

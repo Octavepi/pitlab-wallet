@@ -1,4 +1,4 @@
-name: Pi-Trezor Build
+name: PitLab Wallet Build
 
 on:
   push:
@@ -41,7 +41,7 @@ env:
 
 jobs:
   build-matrix:
-    name: Build Pi-Trezor Images
+    name: Build PitLab Wallet Images
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -126,7 +126,7 @@ jobs:
         restore-keys: |
           go-${{ runner.os }}-
 
-    - name: Build Pi-Trezor image
+    - name: Build PitLab Wallet image
       run: |
         # Use manual inputs if workflow_dispatch, otherwise use matrix
         if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -139,10 +139,10 @@ jobs:
           ROTATION="${{ matrix.config.rotation }}"
         fi
         
-        echo "Building Pi-Trezor: $BOARD / $DISPLAY / ${ROTATION}°"
+        echo "Building PitLab Wallet: $BOARD / $DISPLAY / ${ROTATION}°"
         
         # Run the build with timeout to prevent hanging
-        timeout 7200 ./build_pi-trezor.sh \
+        timeout 7200 ./build.sh \
           --board "$BOARD" \
           --display "$DISPLAY" \
           --rotation "$ROTATION" || {
@@ -188,11 +188,11 @@ jobs:
         mkdir -p artifacts
         
         # Copy main image
-        cp output/images/sdcard.img "artifacts/pi-trezor-${BOARD}-${DISPLAY}-${ROTATION}deg.img"
+        cp output/images/sdcard.img "artifacts/pitlab-wallet-${BOARD}-${DISPLAY}-${ROTATION}deg.img"
         
         # Copy checksums
         if [ -f output/images/sdcard.img.sha256 ]; then
-          cp output/images/sdcard.img.sha256 "artifacts/pi-trezor-${BOARD}-${DISPLAY}-${ROTATION}deg.img.sha256"
+          cp output/images/sdcard.img.sha256 "artifacts/pitlab-wallet-${BOARD}-${DISPLAY}-${ROTATION}deg.img.sha256"
         fi
         
         # Copy build info
@@ -201,32 +201,32 @@ jobs:
         fi
         
         # Create comprehensive build report
-        cat > "artifacts/build-report-${BOARD}-${DISPLAY}-${ROTATION}deg.txt" << EOF
-        Pi-Trezor Build Report
-        =====================
-        
-        Build Date: $(date -u)
-        Git Commit: ${{ github.sha }}
-        Git Ref: ${{ github.ref }}
-        Workflow: ${{ github.workflow }}
-        
-        Configuration:
-        - Board: ${BOARD}
-        - Display: ${DISPLAY}  
-        - Rotation: ${ROTATION}°
-        
-        Build Environment:
-        - OS: $(lsb_release -d | cut -f2)
-        - Kernel: $(uname -r)
-        - Go Version: $(go version)
-        - GCC Version: $(gcc --version | head -1)
-        
-        Image Details:
-        - Size: $(du -h artifacts/pi-trezor-${BOARD}-${DISPLAY}-${ROTATION}deg.img | cut -f1)
-        - SHA256: $(sha256sum artifacts/pi-trezor-${BOARD}-${DISPLAY}-${ROTATION}deg.img | cut -d' ' -f1)
-        
-        Build Status: SUCCESS ✅
-        EOF
+        {
+          echo "PitLab Wallet Build Report"
+          echo "====================="
+          echo
+          echo "Build Date: $(date -u)"
+          echo "Git Commit: ${GITHUB_SHA}"
+          echo "Git Ref: ${GITHUB_REF}"
+          echo "Workflow: ${GITHUB_WORKFLOW}"
+          echo
+          echo "Configuration:"
+          echo "- Board: ${BOARD}"
+          echo "- Display: ${DISPLAY}"
+          echo "- Rotation: ${ROTATION}°"
+          echo
+          echo "Build Environment:"
+          echo "- OS: $(lsb_release -d | cut -f2)"
+          echo "- Kernel: $(uname -r)"
+          echo "- Go Version: $(go version)"
+          echo "- GCC Version: $(gcc --version | head -1)"
+          echo
+          echo "Image Details:"
+          echo "- Size: $(du -h artifacts/pitlab-wallet-${BOARD}-${DISPLAY}-${ROTATION}deg.img | cut -f1)"
+          echo "- SHA256: $(sha256sum artifacts/pitlab-wallet-${BOARD}-${DISPLAY}-${ROTATION}deg.img | cut -d' ' -f1)"
+          echo
+          echo "Build Status: SUCCESS ✅"
+        } > "artifacts/build-report-${BOARD}-${DISPLAY}-${ROTATION}deg.txt"
         
         echo "Generated artifacts:"
         ls -la artifacts/
@@ -234,7 +234,7 @@ jobs:
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: pi-trezor-${{ matrix.config.board }}-${{ matrix.config.display }}-${{ matrix.config.rotation }}deg
+        name: pitlab-wallet-${{ matrix.config.board }}-${{ matrix.config.display }}-${{ matrix.config.rotation }}deg
         path: artifacts/
         retention-days: 30
         compression-level: 6
@@ -283,51 +283,49 @@ jobs:
         ls -la release/
         
         # Create release summary
-        cat > release/RELEASE_NOTES.md << EOF
-        # Pi-Trezor Release ${{ github.ref_name }}
-        
-        This release includes pre-built Pi-Trezor images for multiple Raspberry Pi models and display configurations.
-        
-        ## 📦 Available Images
-        
-        ### Raspberry Pi 3 (32-bit ARM)
-        - \`pi-trezor-pi3-waveshare35a-180deg.img\` - Waveshare 3.5" display, 180° rotation
-        
-        ### Raspberry Pi 4 (64-bit ARM) 
-        - \`pi-trezor-pi4-waveshare35a-180deg.img\` - Waveshare 3.5" display, 180° rotation ⭐ **Recommended**
-        - \`pi-trezor-pi4-hdmi-0deg.img\` - HDMI display, standard orientation
-        
-        ### Raspberry Pi 5 (64-bit ARM)
-        - \`pi-trezor-pi5-waveshare35a-180deg.img\` - Waveshare 3.5" display, 180° rotation
-        - \`pi-trezor-pi5-hdmi-0deg.img\` - HDMI display, standard orientation
-        
-        ## 🚀 Quick Start
-        
-        1. **Download** the appropriate image for your hardware
-        2. **Flash** to SD card: \`sudo dd if=pi-trezor-*.img of=/dev/sdX bs=4M status=progress\`
-        3. **Boot** your Raspberry Pi
-        4. **Connect** to Trezor Suite via USB
-        
-        ## ✅ Verification
-        
-        Each image includes a SHA256 checksum file. Verify integrity before flashing:
-        \`\`\`bash
-        sha256sum -c pi-trezor-*.img.sha256
-        \`\`\`
-        
-        ## 🔐 Security Notes
-        
-        - These images are completely air-gapped (no network connectivity)
-        - Built with reproducible build system
-        - Source code available at: https://github.com/Octavepi/pi-trezor
-        
-        For custom configurations, build from source using the provided build script.
-        EOF
+        RELEASE_NOTES="release/RELEASE_NOTES.md"
+        {
+          echo "# PitLab Wallet Release ${GITHUB_REF_NAME}"
+          echo
+          echo "This release includes pre-built PitLab Wallet images for multiple Raspberry Pi models and display configurations."
+          echo
+          echo "## 📦 Available Images"
+          echo
+          echo "### Raspberry Pi 3 (32-bit ARM)"
+          echo '- `pitlab-wallet-pi3-waveshare35a-180deg.img` - Waveshare 3.5" display, 180° rotation'
+          echo
+          echo "### Raspberry Pi 4 (64-bit ARM)"
+          echo '- `pitlab-wallet-pi4-waveshare35a-180deg.img` - Waveshare 3.5" display, 180° rotation ⭐ Recommended'
+          echo '- `pitlab-wallet-pi4-hdmi-0deg.img` - HDMI display, standard orientation'
+          echo
+          echo "### Raspberry Pi 5 (64-bit ARM)"
+          echo '- `pitlab-wallet-pi5-waveshare35a-180deg.img` - Waveshare 3.5" display, 180° rotation'
+          echo '- `pitlab-wallet-pi5-hdmi-0deg.img` - HDMI display, standard orientation'
+          echo
+          echo "## 🚀 Quick Start"
+          echo '1. Download the appropriate image for your hardware'
+          echo '2. Flash to SD card: `sudo dd if=pitlab-wallet-*.img of=/dev/sdX bs=4M status=progress`'
+          echo '3. Boot your Raspberry Pi'
+          echo '4. Connect to Trezor Suite via USB'
+          echo
+          echo "## ✅ Verification"
+          echo 'Each image includes a SHA256 checksum file. Verify integrity before flashing:'
+          echo '```bash'
+          echo 'sha256sum -c pitlab-wallet-*.img.sha256'
+          echo '```'
+          echo
+          echo "## 🔐 Security Notes"
+          echo '- These images are completely air-gapped (no network connectivity)'
+          echo '- Built with reproducible build system'
+          echo '- Source code available at: https://github.com/Octavepi/pi-trezor'
+          echo
+          echo 'For custom configurations, build from source using the provided build script.'
+        } > "$RELEASE_NOTES"
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        name: "Pi-Trezor ${{ github.ref_name }}"
+        name: "PitLab Wallet ${{ github.ref_name }}"
         body_path: release/RELEASE_NOTES.md
         files: |
           release/*.img

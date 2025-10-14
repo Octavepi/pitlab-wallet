@@ -123,9 +123,12 @@ for svc in $(ls "$TARGET_DIR/lib/systemd/system/" | grep getty@); do
 done
 
 # Enable splash service at boot using default.target
-# Remove any legacy target wants dirs that might have been inherited from older images
-rm -rf "$TARGET_DIR/etc/systemd/system/multi-user.target.wants" || true
-rm -rf "$TARGET_DIR/etc/systemd/system/graphical.target.wants" || true
+# Optional hardening: strip legacy target wants directories unless explicitly disabled.
+# Set PITLAB_STRIP_EXTRA_TARGETS=0 before build to keep them (for debugging or reintroducing multi-user.target behavior).
+if [ "${PITLAB_STRIP_EXTRA_TARGETS:-1}" = "1" ]; then
+    rm -rf "$TARGET_DIR/etc/systemd/system/multi-user.target.wants" || true
+    rm -rf "$TARGET_DIR/etc/systemd/system/graphical.target.wants" || true
+fi
 mkdir -p "$TARGET_DIR/etc/systemd/system/default.target.wants"
 ln -sf ../pitlab-wallet-splash.service "$TARGET_DIR/etc/systemd/system/default.target.wants/pitlab-wallet-splash.service"
 

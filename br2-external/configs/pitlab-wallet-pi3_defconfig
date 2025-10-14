@@ -47,7 +47,7 @@ BR2_PACKAGE_SYSTEMD_RESOLVED=n
 
 # USB support for Trezor communication
 BR2_PACKAGE_LIBUSB=y
-BR2_PACKAGE_LIBUDEV=y
+BR2_PACKAGE_EUDEV=y
 BR2_PACKAGE_LIBHIDAPI=y
 
 # Touchscreen support

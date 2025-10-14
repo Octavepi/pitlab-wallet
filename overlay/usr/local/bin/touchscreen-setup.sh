@@ -15,7 +15,7 @@ log_message "PitLab Wallet touchscreen setup starting..."
 
 # Create necessary directories
 mkdir -p /etc/X11/xorg.conf.d
-mkdir -p /var/lib/pi-trezor
+mkdir -p /var/lib/pitlab-wallet
 mkdir -p /var/lib/trezor
 
 # Detect touchscreen devices
@@ -47,19 +47,19 @@ module linear
 EOF
 
 # Ensure persistent calibration file and symlink
-mkdir -p /var/lib/pi-trezor
-if [ ! -f /var/lib/pi-trezor/pointercal ]; then
+mkdir -p /var/lib/pitlab-wallet
+if [ ! -f /var/lib/pitlab-wallet/pointercal ]; then
     # Create default calibration file (will be updated by actual calibration)
-    cat > /var/lib/pi-trezor/pointercal << 'EOF'
+    cat > /var/lib/pitlab-wallet/pointercal << 'EOF'
 -67 -912 65536 -1477 -1 45590528 65536
 EOF
 fi
-ln -sf /var/lib/pi-trezor/pointercal /etc/pointercal
+ln -sf /var/lib/pitlab-wallet/pointercal /etc/pointercal
 
 # Set environment variables for tslib
 cat > /etc/environment << EOF
 TSLIB_TSDEVICE=${PRIMARY_TOUCHSCREEN:-/dev/input/event0}
-TSLIB_CALIBFILE=/var/lib/pi-trezor/pointercal
+TSLIB_CALIBFILE=/var/lib/pitlab-wallet/pointercal
 TSLIB_CONFFILE=/etc/ts.conf
 TSLIB_PLUGINDIR=/usr/lib/ts
 EOF
@@ -147,16 +147,16 @@ chmod +x /usr/local/bin/test-touchscreen
 
 # Check if we need to run initial calibration
  # Backward-compat: if old marker exists under /var/lib/trezor, mirror it
- if [ -f "/var/lib/trezor/.calibrated" ] && [ ! -f "/var/lib/pi-trezor/.calibrated" ]; then
-     ln -sf /var/lib/trezor/.calibrated /var/lib/pi-trezor/.calibrated || touch /var/lib/pi-trezor/.calibrated
+ if [ -f "/var/lib/trezor/.calibrated" ] && [ ! -f "/var/lib/pitlab-wallet/.calibrated" ]; then
+     ln -sf /var/lib/trezor/.calibrated /var/lib/pitlab-wallet/.calibrated || touch /var/lib/pitlab-wallet/.calibrated
  fi
 
-if [ ! -f "/var/lib/pi-trezor/.calibrated" ]; then
+if [ ! -f "/var/lib/pitlab-wallet/.calibrated" ]; then
     log_message "First boot detected - touchscreen will need calibration"
     log_message "Run 'calibrate-touchscreen' to calibrate the display"
     
     # Mark as needing calibration
-    touch /var/lib/pi-trezor/.needs_calibration
+    touch /var/lib/pitlab-wallet/.needs_calibration
 else
     log_message "Touchscreen already calibrated"
 fi
@@ -164,7 +164,7 @@ fi
 log_message "PitLab Wallet touchscreen setup completed successfully"
 
 # Set proper permissions
-chmod 644 /etc/ts.conf /var/lib/pi-trezor/pointercal
+chmod 644 /etc/ts.conf /var/lib/pitlab-wallet/pointercal
 chmod 755 /usr/local/bin/calibrate-touchscreen /usr/local/bin/test-touchscreen
 
 exit 0

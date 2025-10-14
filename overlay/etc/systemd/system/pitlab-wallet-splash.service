@@ -5,7 +5,7 @@ DefaultDependencies=no
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/pi-trezor-splash.sh
+ExecStart=/usr/local/bin/pitlab-wallet-splash.sh
 StandardOutput=tty
 StandardInput=tty
 TTYPath=/dev/tty1

@@ -123,6 +123,6 @@ for svc in $(ls "$TARGET_DIR/lib/systemd/system/" | grep getty@); do
 done
 
 # Enable splash service at boot
-ln -sf ../pi-trezor-splash.service "$TARGET_DIR/etc/systemd/system/graphical.target.wants/pi-trezor-splash.service"
+ln -sf ../pitlab-wallet-splash.service "$TARGET_DIR/etc/systemd/system/graphical.target.wants/pitlab-wallet-splash.service"
 
 echo "PitLab Wallet post-build script completed successfully"

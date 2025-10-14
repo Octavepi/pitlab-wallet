@@ -1,4 +1,4 @@
-# Pi-Trezor Minimal Configuration Fragment
+# PitLab Wallet Minimal Configuration Fragment
 # Apply these changes to reduce build time and image size
 
 # Disable debugging tools (safe for production)
@@ -18,5 +18,5 @@
 # BR2_PACKAGE_TSLIB=y           # Critical for touchscreen
 # BR2_PACKAGE_PYTHON3=y         # Critical for Trezor Core
 # BR2_PACKAGE_HOST_GO=y         # Critical for trezord-go
-# BR2_PACKAGE_TREZORD_GO=y      # Critical for Pi-Trezor
-# BR2_PACKAGE_TREZOR_FIRMWARE=y # Critical for Pi-Trezor
+# BR2_PACKAGE_TREZORD_GO=y      # Critical for PitLab Wallet
+# BR2_PACKAGE_TREZOR_FIRMWARE=y # Critical for PitLab Wallet

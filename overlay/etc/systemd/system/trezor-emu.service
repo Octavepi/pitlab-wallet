@@ -30,7 +30,7 @@ Environment=DISPLAY=:0
 Environment=SDL_VIDEODRIVER=fbcon
 Environment=SDL_FBDEV=/dev/fb0
 Environment=TSLIB_TSDEVICE=/dev/input/event0
-Environment=TSLIB_CALIBFILE=/var/lib/pi-trezor/pointercal
+Environment=TSLIB_CALIBFILE=/var/lib/pitlab-wallet/pointercal
 Environment=TSLIB_CONFFILE=/etc/ts.conf
 Environment=TSLIB_PLUGINDIR=/usr/lib/ts
 

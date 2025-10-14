@@ -61,8 +61,8 @@ PitLab Wallet is designed as an **air-gapped hardware wallet appliance** with se
 1. **Build from Source**
    ```bash
    # Clone and verify the repository (PitLab Wallet)
-   git clone https://github.com/Octavepi/pi-trezor.git
-   cd pi-trezor
+   git clone https://github.com/Octavepi/pitlab-wallet.git
+   cd pitlab-wallet
    git verify-commit HEAD  # If GPG-signed
    
    # Build your own image
@@ -160,7 +160,7 @@ PitLab Wallet aims for reproducible builds to enable verification:
 If you discover a security vulnerability, please report it responsibly:
 
 1. **DO NOT** create a public GitHub issue
-2. Use [GitHub Security Advisories](https://github.com/Octavepi/pi-trezor/security/advisories/new)
+2. Use [GitHub Security Advisories](https://github.com/Octavepi/pitlab-wallet/security/advisories/new)
 3. Or email: [security contact - to be added]
 
 ### What to Include

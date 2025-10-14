@@ -317,7 +317,7 @@ jobs:
           echo "## 🔐 Security Notes"
           echo '- These images are completely air-gapped (no network connectivity)'
           echo '- Built with reproducible build system'
-          echo '- Source code available at: https://github.com/Octavepi/pi-trezor'
+          echo '- Source code available at: https://github.com/Octavepi/pitlab-wallet'
           echo
           echo 'For custom configurations, build from source using the provided build script.'
         } > "$RELEASE_NOTES"
@@ -380,7 +380,7 @@ jobs:
         echo "=== Buildroot Configuration Validation ==="
         
         # Check that networking is properly disabled
-        for config in br2-external/configs/pi-trezor-*_defconfig; do
+        for config in br2-external/configs/pitlab-wallet-*_defconfig; do
           echo "Checking $config..."
           
           # These should NOT be present (networking disabled)

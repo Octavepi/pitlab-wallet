@@ -218,7 +218,7 @@ configure_buildroot() {
     cd buildroot
     
     # Use our custom defconfig from BR2_EXTERNAL
-    make pi-trezor-${BOARD}_defconfig BR2_EXTERNAL=../br2-external O="${BR_OUTPUT_DIR}"
+    make pitlab-wallet-${BOARD}_defconfig BR2_EXTERNAL=../br2-external O="${BR_OUTPUT_DIR}"
     
     # Enable additional packages if needed
     if [[ $DISPLAY == "hdmi" ]]; then

@@ -39,8 +39,8 @@ PitLab Wallet aims to provide a **reproducible, secure, air-gapped hardware wall
 
 ```bash
 # Clone the repo
-git clone https://github.com/Octavepi/pi-trezor.git
-cd pi-trezor
+git clone https://github.com/Octavepi/pitlab-wallet.git
+cd pitlab-wallet
 
 # Run the build
 ./build.sh --board pi4 --display waveshare35a
@@ -148,8 +148,8 @@ PitLab Wallet builds upon the excellent work of:
 
 ## 📞 Contact
 
-- **Issues**: [GitHub Issues](https://github.com/Octavepi/pi-trezor/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/Octavepi/pi-trezor/discussions)
+- **Issues**: [GitHub Issues](https://github.com/Octavepi/pitlab-wallet/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Octavepi/pitlab-wallet/discussions)
 - **Security**: Use GitHub Security Advisories for vulnerability reports
 
 ---

@@ -1,6 +1,6 @@
 # PitLab Wallet: Air-Gapped Hardware Wallet Appliance
 
-[![Build Status](https://github.com/Octavepi/pi-trezor/actions/workflows/build.yml/badge.svg)](https://github.com/Octavepi/pi-trezor/actions)
+[![Build Status](https://github.com/Octavepi/pitlab-wallet/actions/workflows/build.yml/badge.svg)](https://github.com/Octavepi/pitlab-wallet/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # PitLab Wallet
@@ -64,8 +64,8 @@ If you fork, redistribute, or create derivative works from PitLab Wallet, you MU
 
 1. **Clone the Repository (PitLab Wallet)**
    ```bash
-   git clone https://github.com/Octavepi/pi-trezor.git
-   cd pi-trezor
+   git clone https://github.com/Octavepi/pitlab-wallet.git
+   cd pitlab-wallet
    ```
 
 2. **Install Host Dependencies**
@@ -300,9 +300,9 @@ systemctl list-units --type=service --state=running
 │   ├── external.mk              # External makefile includes
 │   ├── Config.in                # Buildroot package configuration
 │   ├── configs/                 # Board-specific configurations
-│   │   ├── pi-trezor-pi3_defconfig
-│   │   ├── pi-trezor-pi4_defconfig
-│   │   ├── pi-trezor-pi5_defconfig
+│   │   ├── pitlab-wallet-pi3_defconfig
+│   │   ├── pitlab-wallet-pi4_defconfig
+│   │   ├── pitlab-wallet-pi5_defconfig
 │   │   ├── kernel_touchscreen.fragment
 │   │   └── busybox.fragment
 │   ├── board/                   # Board-specific scripts
@@ -321,7 +321,7 @@ systemctl list-units --type=service --state=running
 ├── overlay/                     # Root filesystem overlay
 │   ├── etc/
 │   │   ├── systemd/system/      # Systemd service files
-│   │   │   ├── pi-trezor.service
+│   │   │   ├── trezor-emu.service
 │   │   │   ├── touchscreen-setup.service
 │   │   │   ├── multi-user.target.wants/
 │   │   │   └── graphical.target.wants/
@@ -570,8 +570,8 @@ curl http://127.0.0.1:21325/
    ```
 
 3. **Community Support**
-   - GitHub Issues: [Report bugs and ask questions](https://github.com/Octavepi/pi-trezor/issues)
-   - Discussions: [Community discussions and tips](https://github.com/Octavepi/pi-trezor/discussions)
+   - GitHub Issues: [Report bugs and ask questions](https://github.com/Octavepi/pitlab-wallet/issues)
+   - Discussions: [Community discussions and tips](https://github.com/Octavepi/pitlab-wallet/discussions)
 
 ## 📄 License
 

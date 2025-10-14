@@ -2,8 +2,8 @@
 # touchscreen-calibration-once.sh
 # Run touchscreen calibration on first boot only, save config to persistent location
 
-CALIB_FILE="/var/lib/pi-trezor/pointercal"
-PERSIST_DIR="/var/lib/pi-trezor"
+CALIB_FILE="/var/lib/pitlab-wallet/pointercal"
+PERSIST_DIR="/var/lib/pitlab-wallet"
 MARK_FILE="$PERSIST_DIR/.calibrated"
 
 mkdir -p "$PERSIST_DIR"

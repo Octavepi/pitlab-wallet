@@ -4,7 +4,7 @@
 set -eu
 
 : "${TSLIB_TSDEVICE:=/dev/input/event0}"
-: "${TSLIB_CALIBFILE:=/var/lib/pi-trezor/pointercal}"
+: "${TSLIB_CALIBFILE:=/var/lib/pitlab-wallet/pointercal}"
 : "${TSLIB_CONFFILE:=/etc/ts.conf}"
 : "${TSLIB_PLUGINDIR:=/usr/lib/ts}"
 

@@ -58,9 +58,9 @@ check_file "br2-external/Config.in"
 echo
 echo "Checking br2-external/configs..."
 check_dir "br2-external/configs"
-check_file "br2-external/configs/pi-trezor-pi3_defconfig"
-check_file "br2-external/configs/pi-trezor-pi4_defconfig"
-check_file "br2-external/configs/pi-trezor-pi5_defconfig"
+check_file "br2-external/configs/pitlab-wallet-pi3_defconfig"
+check_file "br2-external/configs/pitlab-wallet-pi4_defconfig"
+check_file "br2-external/configs/pitlab-wallet-pi5_defconfig"
 check_file "br2-external/configs/kernel_touchscreen.fragment"
 check_file "br2-external/configs/busybox.fragment"
 
@@ -93,7 +93,7 @@ check_dir "overlay/etc/systemd/system/graphical.target.wants"
 check_dir "overlay/etc/udev/rules.d"
 check_dir "overlay/usr/local/bin"
 
-check_file "overlay/etc/systemd/system/pi-trezor.service"
+# Main service files are trezor-emu.service and trezord.service
 check_file "overlay/etc/systemd/system/touchscreen-setup.service"
 check_file "overlay/etc/systemd/system/trezord.service"
 check_file "overlay/etc/systemd/system/trezor-emu.service"

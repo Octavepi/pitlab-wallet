@@ -2,7 +2,7 @@
 Description=tslib uinput remapper for touchscreen
 After=local-fs.target
 Before=trezor-emu.service
-ConditionPathExists=/var/lib/pi-trezor/pointercal
+ConditionPathExists=/var/lib/pitlab-wallet/pointercal
 
 [Service]
 Type=simple

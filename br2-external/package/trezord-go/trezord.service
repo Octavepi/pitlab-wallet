@@ -29,4 +29,4 @@ SupplementaryGroups=plugdev
 SyslogIdentifier=trezord
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

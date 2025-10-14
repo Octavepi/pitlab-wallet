@@ -122,7 +122,8 @@ for svc in $(ls "$TARGET_DIR/lib/systemd/system/" | grep getty@); do
     ln -sf /dev/null "$TARGET_DIR/etc/systemd/system/$svc"
 done
 
-# Enable splash service at boot
-ln -sf ../pitlab-wallet-splash.service "$TARGET_DIR/etc/systemd/system/graphical.target.wants/pitlab-wallet-splash.service"
+# Enable splash service at boot using default.target
+mkdir -p "$TARGET_DIR/etc/systemd/system/default.target.wants"
+ln -sf ../pitlab-wallet-splash.service "$TARGET_DIR/etc/systemd/system/default.target.wants/pitlab-wallet-splash.service"
 
 echo "PitLab Wallet post-build script completed successfully"

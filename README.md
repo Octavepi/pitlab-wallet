@@ -320,8 +320,7 @@ systemctl list-units --type=service --state=running
 │   │   ├── systemd/system/      # Systemd service files
 │   │   │   ├── trezor-emu.service
 │   │   │   ├── touchscreen-setup.service
-│   │   │   ├── multi-user.target.wants/
-│   │   │   └── graphical.target.wants/
+│   │   │   └── (runtime-created *.wants symlinks, none stored in overlay)
 │   │   └── udev/rules.d/        # Udev device rules
 │   │       └── 51-trezor.rules
 │   └── usr/local/bin/           # Custom scripts

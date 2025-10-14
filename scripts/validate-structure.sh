@@ -85,8 +85,8 @@ echo
 echo "Checking overlay structure..."
 check_dir "overlay"
 check_dir "overlay/etc/systemd/system"
-check_dir "overlay/etc/systemd/system/multi-user.target.wants"
-check_dir "overlay/etc/systemd/system/graphical.target.wants"
+check_dir "overlay/etc/systemd/system"
+echo "(Systemd symlinks now unified under default.target; .wants directories for multi-user/graphical removed)"
 check_dir "overlay/etc/udev/rules.d"
 check_dir "overlay/usr/local/bin"
 

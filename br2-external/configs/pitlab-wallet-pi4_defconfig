@@ -85,10 +85,6 @@ BR2_PACKAGE_HOST_ISL=y
 BR2_PACKAGE_PYTHON3=y
 BR2_PACKAGE_PYTHON3_PY_PYC=y
 
-# USB and HID support for Trezor communication
-BR2_PACKAGE_LIBUSB=y
-BR2_PACKAGE_HIDAPI=y
-BR2_PACKAGE_EUDEV=y
 
 # Libraries required by system components
 BR2_PACKAGE_ZLIB=y

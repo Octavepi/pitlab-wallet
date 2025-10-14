@@ -19,4 +19,3 @@
 # BR2_PACKAGE_PYTHON3=y         # Critical for Trezor Core
 # BR2_PACKAGE_HOST_GO=y         # Critical for trezord-go
 # BR2_PACKAGE_TREZORD_GO=y      # Critical for PitLab Wallet
-# BR2_PACKAGE_TREZOR_FIRMWARE=y # Critical for PitLab Wallet

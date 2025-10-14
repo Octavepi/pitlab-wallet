@@ -1,5 +1,5 @@
 #!/bin/bash
-# Pi-Trezor Download Optimization Script
+# PitLab Wallet Download Optimization Script
 # Improves download speeds and adds fallback mirrors
 
 set -e
@@ -17,7 +17,7 @@ FAST_MIRRORS[glibc]="https://ftp.gnu.org/gnu/glibc https://ftpmirror.gnu.org/gli
 # Create .wgetrc for faster downloads
 create_fast_wgetrc() {
     cat > "$HOME/.wgetrc" << 'EOF'
-# Pi-Trezor optimized wget configuration
+# PitLab Wallet optimized wget configuration
 timeout = 30
 tries = 5
 retry_connrefused = on
@@ -46,7 +46,7 @@ prefetch_sources() {
 
 # Main optimization function
 optimize_downloads() {
-    echo "Optimizing Pi-Trezor downloads..."
+    echo "Optimizing PitLab Wallet downloads..."
     
     # Create optimized wget config
     create_fast_wgetrc

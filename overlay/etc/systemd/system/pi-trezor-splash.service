@@ -1,5 +1,5 @@
 [Unit]
-Description=Display Pi-Trezor splash on tty1
+Description=Display PitLab Wallet splash on tty1
 After=systemd-user-sessions.service plymouth-quit-wait.service
 DefaultDependencies=no
 

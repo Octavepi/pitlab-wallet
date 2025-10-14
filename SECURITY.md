@@ -60,7 +60,7 @@ PitLab Wallet is designed as an **air-gapped hardware wallet appliance** with se
 
 1. **Build from Source**
    ```bash
-   # Clone and verify the repository
+   # Clone and verify the repository (PitLab Wallet)
    git clone https://github.com/Octavepi/pi-trezor.git
    cd pi-trezor
    git verify-commit HEAD  # If GPG-signed
@@ -72,7 +72,7 @@ PitLab Wallet is designed as an **air-gapped hardware wallet appliance** with se
 2. **Verify Image Checksums**
    ```bash
    # After downloading a pre-built image
-   sha256sum -c pi-trezor-*.img.sha256
+   sha256sum -c pitlab-wallet-*.img.sha256
    ```
 
 3. **Secure Physical Access**
@@ -224,7 +224,7 @@ Future releases may include:
 
 All release images include SHA256 checksums:
 ```bash
-sha256sum -c pi-trezor-*.img.sha256
+sha256sum -c pitlab-wallet-*.img.sha256
 ```
 
 ## Additional Resources

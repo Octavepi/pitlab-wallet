@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Pi-Trezor Repository Structure Validation Script
+# PitLab Wallet Repository Structure Validation Script
 # Verifies that all required files and directories are present
 
 set -e
@@ -8,7 +8,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-echo "Pi-Trezor Repository Structure Validation"
+echo "PitLab Wallet Repository Structure Validation"
 echo "=========================================="
 echo
 
@@ -45,9 +45,8 @@ check_file "README.md"
 check_file "LICENSE"
 check_file "CONTRIBUTING.md"
 check_file "SECURITY.md"
-check_file "build_pi-trezor.sh"
+check_file "build.sh"
 check_file ".gitignore"
-check_file ".gitmodules"
 
 echo
 echo "Checking br2-external structure..."
@@ -108,10 +107,10 @@ check_file ".github/workflows/build.yml"
 
 echo
 echo "Validating build script is executable..."
-if [ -x "build_pi-trezor.sh" ]; then
-    echo "✅ build_pi-trezor.sh is executable"
+if [ -x "build.sh" ]; then
+    echo "✅ build.sh is executable"
 else
-    echo "❌ build_pi-trezor.sh is not executable"
+    echo "❌ build.sh is not executable"
     ((ERRORS++))
 fi
 

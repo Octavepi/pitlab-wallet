@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Pi-Trezor Host Setup Script
-# Installs required dependencies for building the Pi-Trezor appliance.
+# PitLab Wallet Host Setup Script
+# Installs required dependencies for building the PitLab Wallet appliance.
 # This script is intended for Debian/Ubuntu-based systems.
 
 set -e
@@ -77,4 +77,4 @@ else
 fi
 
 log_info "Host dependency installation complete."
-log_info "You can now run the main build script: ./build_pi-trezor.sh"
+log_info "You can now run the main build script: ./build.sh"

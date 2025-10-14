@@ -1,4 +1,4 @@
-# Pi-Trezor .gitignore
+# PitLab Wallet .gitignore
 
 # Build artifacts
 buildroot/

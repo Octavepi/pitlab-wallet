@@ -35,15 +35,15 @@ PitLab Wallet aims to provide a **reproducible, secure, air-gapped hardware wall
   - Linux systemd services
   - Cross-compilation
 
-### Building from Source
+### Building PitLab Wallet from Source
 
 ```bash
-# Clone with submodules
-git clone --recursive https://github.com/Octavepi/pi-trezor.git
+# Clone the repo
+git clone https://github.com/Octavepi/pi-trezor.git
 cd pi-trezor
 
 # Run the build
-   ./build.sh --board pi4 --display waveshare35a
+./build.sh --board pi4 --display waveshare35a
 ```
 
 ### Repository Structure

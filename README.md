@@ -1,6 +1,6 @@
 # PitLab Wallet: Air-Gapped Hardware Wallet Appliance
 
-[![Build Status](https://github.com/Octavepi/pi-trezor/workflows/Build/badge.svg)](https://github.com/Octavepi/pi-trezor/actions)
+[![Build Status](https://github.com/Octavepi/pi-trezor/actions/workflows/build.yml/badge.svg)](https://github.com/Octavepi/pi-trezor/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # PitLab Wallet
@@ -8,6 +8,16 @@
 **An air-gapped hardware wallet appliance for Raspberry Pi**
 
 PitLab Wallet is a security-focused, air-gapped cryptocurrency hardware wallet built on Raspberry Pi, running Trezor Core (emulator) and trezord-go bridge on a minimal Buildroot-based operating system.
+## Acknowledgements
+
+This project makes use of the following third-party sources, libraries, and upstream projects:
+
+- Buildroot (https://buildroot.org/)
+- Trezor Core (https://github.com/trezor/trezor-firmware)
+- trezord-go (https://github.com/trezor/trezord-go)
+- Raspberry Pi Linux kernel overlays (https://github.com/raspberrypi/linux)
+
+If you fork, redistribute, or create derivative works from PitLab Wallet, you MUST preserve this acknowledgement section and provide clear attribution to the original author (Octavepi) and the PitLab Wallet project, including the repository URL.
 
 ## 🔐 Security Features
 
@@ -17,6 +27,7 @@ PitLab Wallet is a security-focused, air-gapped cryptocurrency hardware wallet b
 - **Hardware Security**: Leverages Raspberry Pi security features
 - **USB-Only Communication**: Connect only to Trezor Suite via USB
 - **Reproducible Builds**: Deterministic build process for verification
+- **Passphrase/Passcode Key Storage Protection**: Trezor emulator supports passphrase (or PIN) protection for wallet keys. This **must** be enabled—otherwise, anyone with access to your SD card can recover your keys. Always use a strong passphrase or PIN for maximum security.
 
 ## 🎯 Supported Hardware
 
@@ -51,7 +62,7 @@ PitLab Wallet is a security-focused, air-gapped cryptocurrency hardware wallet b
 
 ### Build Your PitLab Wallet
 
-1. **Clone the Repository**
+1. **Clone the Repository (PitLab Wallet)**
    ```bash
    git clone https://github.com/Octavepi/pi-trezor.git
    cd pi-trezor
@@ -120,12 +131,13 @@ Positional:
    FLAGS                             -c | --clean | -dc | --distclean
 
 Options:
-  --board <pi3|pi4|pi5>              Target Raspberry Pi board (default: pi4)
-  --display <display_name>           Display overlay name (default: waveshare35a)  
-  --rotation <0|90|180|270>          Display rotation (default: 180)
+   --board <pi3|pi4|pi5>              Target Raspberry Pi board (default: pi4)
+   --display <display_name>           Display overlay name (default: waveshare35a)  
+   --rotation <0|90|180|270>          Display rotation (default: 180)
    --clean, -c                        Wipe previous Buildroot output and rebuild fresh
    --distclean, -dc                   Remove Buildroot download cache too (implies --clean)
-  --help                             Show help message
+   --prefetch                         Prefetch all sources for offline/air-gapped builds
+   --help                             Show help message
 
 Examples:
    # Positional usage
@@ -160,6 +172,28 @@ The system supports any display overlay provided by the Raspberry Pi firmware. C
 | ST7735R | `st7735r` | Generic 1.8" SPI display |
 | HDMI | `hdmi` | Standard HDMI output |
 | VC4 KMS | `vc4-kms-v3d` | Modern DRM/KMS driver |
+
+
+### Offline/Air-Gapped Build Workflow
+
+To support fully reproducible, offline builds, you can prefetch all required source tarballs and packages on a networked machine, then build on an air-gapped system:
+
+1. **Prefetch Sources** (networked machine):
+   ```sh
+   ./build.sh --prefetch --board pi4 --display waveshare35a --rotation 180
+   ```
+   This downloads all sources to `buildroot/dl/` for the selected board/display/rotation.
+
+2. **Transfer Download Cache**:
+   Copy the entire `buildroot/dl/` directory to your air-gapped build machine.
+
+3. **Build Offline** (air-gapped machine):
+   ```sh
+   ./build.sh --board pi4 --display waveshare35a --rotation 180
+   ```
+   The build will complete with no network access required.
+
+This workflow ensures all sources are fetched as tarballs and supports fully reproducible, offline builds for maximum security.
 
 ## 🔧 Usage Guide
 
@@ -256,12 +290,11 @@ systemctl list-units --type=service --state=running
 ### Repository Structure
 
 ```
-pi-trezor/
+./
 ├── build.sh           # Main build script
 ├── README.md                    # This file
 ├── LICENSE                      # MIT License
 ├── .gitignore                   # Git ignore rules
-├── .gitmodules                  # Buildroot submodule reference
 ├── br2-external/                # Buildroot BR2_EXTERNAL tree
 │   ├── external.desc            # BR2_EXTERNAL descriptor
 │   ├── external.mk              # External makefile includes

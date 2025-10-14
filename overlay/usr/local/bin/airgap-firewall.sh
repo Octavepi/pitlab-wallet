@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Pi-Trezor Air-Gap Firewall Service
+# PitLab Wallet Air-Gap Firewall Service
 # Enforces complete network isolation even if physical connections exist
 
 set -e
@@ -11,7 +11,7 @@ log_message() {
     echo "$(date): $1" | tee -a "$LOG_FILE"
 }
 
-log_message "Pi-Trezor Air-Gap Firewall starting..."
+log_message "PitLab Wallet Air-Gap Firewall starting..."
 
 # Disable all network interfaces except loopback
 for iface in $(ip link show | grep -E '^[0-9]+: ' | awk -F': ' '{print $2}' | grep -v lo); do

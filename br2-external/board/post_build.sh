@@ -123,6 +123,9 @@ for svc in $(ls "$TARGET_DIR/lib/systemd/system/" | grep getty@); do
 done
 
 # Enable splash service at boot using default.target
+# Remove any legacy target wants dirs that might have been inherited from older images
+rm -rf "$TARGET_DIR/etc/systemd/system/multi-user.target.wants" || true
+rm -rf "$TARGET_DIR/etc/systemd/system/graphical.target.wants" || true
 mkdir -p "$TARGET_DIR/etc/systemd/system/default.target.wants"
 ln -sf ../pitlab-wallet-splash.service "$TARGET_DIR/etc/systemd/system/default.target.wants/pitlab-wallet-splash.service"
 

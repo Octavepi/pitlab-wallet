@@ -45,8 +45,8 @@ for proc in dhcpcd wpa_supplicant NetworkManager connman systemd-networkd system
     pkill -9 "$proc" 2>/dev/null || true
 done
 
-# Mask network services to prevent them from starting
-systemctl mask networking dhcpcd wpa_supplicant systemd-networkd systemd-resolved 2>/dev/null || true
+# On BusyBox init, enforce no network init scripts are present/enabled
+rm -f /etc/init.d/*network* /etc/init.d/*wpa* /etc/init.d/*dhcp* 2>/dev/null || true
 
 # Continuously monitor and re-disable any network interfaces
 while true; do

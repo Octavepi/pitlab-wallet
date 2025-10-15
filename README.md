@@ -178,12 +178,10 @@ The system supports any display overlay provided by the Raspberry Pi firmware. C
 To support fully reproducible, offline builds, you can prefetch all required source tarballs and packages on a networked machine, then build on an air-gapped system:
 
 1. **Prefetch Sources** (networked machine):
-   ```sh
-   ./build.sh --prefetch --board pi4 --display waveshare35a --rotation 180
+   ```bash
+   # Inspect service output (BusyBox syslog)
+   tail -n 200 /var/log/messages | grep -E 'trezord|trezor-emu|touchscreen'
    ```
-   This downloads all sources to `buildroot/dl/` for the selected board/display/rotation.
-
-2. **Transfer Download Cache**:
    Copy the entire `buildroot/dl/` directory to your air-gapped build machine.
 
 3. **Build Offline** (air-gapped machine):
@@ -259,12 +257,10 @@ This workflow ensures all sources are fetched as tarballs and supports fully rep
 
 #### Log Files
 ```bash
-# System logs
-sudo journalctl -u trezord
-sudo journalctl -u trezor-emu
-sudo journalctl -u touchscreen-setup
+# System logs (BusyBox syslog)
+sudo tail -n 200 /var/log/messages | grep -E 'trezord|trezor-emu|touchscreen'
 
-# Trezor bridge log
+# Trezor bridge log (if separate file is used)
 sudo tail -f /var/log/trezord.log
 
 # Touchscreen setup log
@@ -551,7 +547,8 @@ curl http://127.0.0.1:21325/
 
 1. **Check System Logs**
    ```bash
-   journalctl -b | grep -i error
+   # BusyBox syslog (no journald)
+   tail -n 200 /var/log/messages | grep -i error
    dmesg | tail -50
    ```
 
@@ -564,7 +561,8 @@ curl http://127.0.0.1:21325/
      echo "Board: $(cat /proc/cpuinfo | grep Model)"
      echo "Kernel: $(uname -a)"
      echo "Services:"
-     systemctl status trezord trezor-emu --no-pager
+   /etc/init.d/S90trezord status 2>/dev/null || true
+   /etc/init.d/S91trezor-emu status 2>/dev/null || true
      echo "USB Devices:"
      lsusb
      echo "Input Devices:"

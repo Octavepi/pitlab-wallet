@@ -104,14 +104,14 @@ echo "Calibrating touchscreen at: $TSLIB_TSDEVICE"
 echo "Please tap the crosshairs as they appear..."
 echo
 
-# Stop existing services temporarily
-systemctl stop trezor-emu || true
+# Stop existing services temporarily (BusyBox init)
+/etc/init.d/S91trezor-emu stop 2>/dev/null || true
 
 # Run calibration
 ts_calibrate
 
 # Restart services
-systemctl start trezor-emu || true
+/etc/init.d/S91trezor-emu start 2>/dev/null || true
 
 echo "Calibration complete!"
 echo "New calibration saved to: $TSLIB_CALIBFILE"

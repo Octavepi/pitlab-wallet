@@ -20,28 +20,19 @@ echo "Selected display/touchscreen driver: $SELECTED_DRIVER"
 # If you want to prune kernel modules, implement an explicit mapping from overlay to module names first.
 # echo "Module pruning skipped for safety."
 
-
-# Remove non-essential systemd services (keep only trezord, trezor-emu, touchscreen-setup, airgap-firewall, systemd core)
-if [ -d "$TARGET_DIR/etc/systemd/system" ]; then
-    for svc in $(ls "$TARGET_DIR/etc/systemd/system" | grep ".service" | grep -v -E 'trezord|trezor-emu|touchscreen-setup|airgap-firewall|systemd|local-fs|multi-user|graphical|basic|getty|journald|udevd|user-sessions|tmpfiles|sysinit|dbus|logind'); do
-        rm -f "$TARGET_DIR/etc/systemd/system/$svc"
-    done
-fi
+# Remove non-essential init scripts (keep only S* init scripts for our services)
+# BusyBox init will auto-run scripts in /etc/init.d/S* at boot
 
 # Remove non-essential packages cautiously. Avoid blanket deletions in /usr/bin as it may contain critical symlinks (e.g., /usr/bin/env).
 # Keep /usr/bin intact to prevent breaking base utilities.
 
-# In /usr/sbin, keep core daemons and udevadm, avoid aggressive pruning.
+# In /usr/sbin, keep core daemons and udevadm
 find "$TARGET_DIR/usr/sbin" -type f \
-    ! -name 'systemd*' \
     ! -name 'udevd' \
     ! -name 'udevadm' \
-    ! -name 'journald' \
-    ! -name 'logind' \
-    ! -name 'dbus-daemon' \
-    -exec rm -f {} +
+    -exec rm -f {} + 2>/dev/null || true
 
-# In /usr/local/bin, keep PitLab Wallet binaries and touch utilities; remove anything else that sneaks in.
+# In /usr/local/bin, keep PitLab Wallet binaries and scripts
 find "$TARGET_DIR/usr/local/bin" -type f \
     ! -name 'trezord' \
     ! -name 'trezor-emu' \
@@ -51,7 +42,8 @@ find "$TARGET_DIR/usr/local/bin" -type f \
     ! -name 'calibrate-touchscreen' \
     ! -name 'test-touchscreen' \
     ! -name 'airgap-firewall.sh' \
-    -exec rm -f {} +
+    ! -name 'pitlab-wallet-splash.sh' \
+    -exec rm -f {} + 2>/dev/null || true
 
 # Create necessary directories
 mkdir -p "$TARGET_DIR/tmp"
@@ -104,32 +96,18 @@ and trezord-go bridge for secure cryptocurrency operations.
 ⚠️  Do not connect to any networks for security.
 
 Status:
-- USB Trezor Bridge: systemctl status trezord
-- Trezor Emulator: systemctl status trezor-emu
+- USB Trezor Bridge: /etc/init.d/S90trezord status
+- Trezor Emulator: /etc/init.d/S91trezor-emu status
 - Touchscreen: ls /dev/input/
 
 Connect via Trezor Suite over USB only.
 EOF
 
-# Network isolation is handled by airgap-firewall.service at runtime
-# Only remove config files at build time, service management at runtime
-rm -f "$TARGET_DIR/etc/systemd/network/"* || true
-rm -f "$TARGET_DIR/etc/wpa_supplicant/"* || true
-rm -f "$TARGET_DIR/etc/dhcpcd.conf" || true
+# Network isolation is handled by airgap-firewall init script at runtime
+rm -f "$TARGET_DIR/etc/wpa_supplicant/"* 2>/dev/null || true
+rm -f "$TARGET_DIR/etc/dhcpcd.conf" 2>/dev/null || true
 
-# Mask all getty services to prevent login prompts
-for svc in $(ls "$TARGET_DIR/lib/systemd/system/" | grep getty@); do
-    ln -sf /dev/null "$TARGET_DIR/etc/systemd/system/$svc"
-done
-
-# Enable splash service at boot using default.target
-# Optional hardening: strip legacy target wants directories unless explicitly disabled.
-# Set PITLAB_STRIP_EXTRA_TARGETS=0 before build to keep them (for debugging or reintroducing multi-user.target behavior).
-if [ "${PITLAB_STRIP_EXTRA_TARGETS:-1}" = "1" ]; then
-    rm -rf "$TARGET_DIR/etc/systemd/system/multi-user.target.wants" || true
-    rm -rf "$TARGET_DIR/etc/systemd/system/graphical.target.wants" || true
-fi
-mkdir -p "$TARGET_DIR/etc/systemd/system/default.target.wants"
-ln -sf ../pitlab-wallet-splash.service "$TARGET_DIR/etc/systemd/system/default.target.wants/pitlab-wallet-splash.service"
+# Ensure all init.d scripts are executable
+chmod +x "$TARGET_DIR/etc/init.d/S"* 2>/dev/null || true
 
 echo "PitLab Wallet post-build script completed successfully"

@@ -214,15 +214,14 @@ This workflow ensures all sources are fetched as tarballs and supports fully rep
 
 3. **Service Status Check**
    ```bash
-   # Check Trezor bridge status
-   systemctl status trezord
+   # Check if Trezor bridge is running
+   /etc/init.d/S90trezord status
    
-   # Check Trezor emulator status  
-   systemctl status trezor-emu
+   # Check if Trezor emulator is running
+   /etc/init.d/S91trezor-emu status
    
-   # View service logs
-   journalctl -u trezord -f
-   journalctl -u trezor-emu -f
+   # View service output (check logs in /var/log/)
+   tail -f /var/log/messages
    ```
 
 ### Connecting to Trezor Suite
@@ -246,13 +245,16 @@ This workflow ensures all sources are fetched as tarballs and supports fully rep
 #### Service Management
 ```bash
 # Restart Trezor services
-sudo systemctl restart trezord trezor-emu
+/etc/init.d/S90trezord restart
+/etc/init.d/S91trezor-emu restart
 
 # Stop services (for maintenance)
-sudo systemctl stop trezord trezor-emu
+/etc/init.d/S90trezord stop
+/etc/init.d/S91trezor-emu stop
 
-# Enable/disable autostart
-sudo systemctl enable/disable trezord trezor-emu
+# Start services manually
+/etc/init.d/S90trezord start
+/etc/init.d/S91trezor-emu start
 ```
 
 #### Log Files
@@ -280,8 +282,9 @@ ls -la /dev/input/
 cat /boot/config.txt
 cat /etc/ts.conf
 
-# Service status
-systemctl list-units --type=service --state=running
+# Running services (init.d)
+ls -la /etc/init.d/S*
+ps aux | grep -E 'trezord|trezor-emu'
 ```
 
 ## 🏗️ Development
@@ -311,16 +314,19 @@ systemctl list-units --type=service --state=running
 │   └── package/                 # Custom Buildroot packages
 │       ├── trezord-go/          # Trezor Bridge package
 │       │   ├── Config.in
-│       │   ├── trezord-go.mk
-│       │   └── trezord.service
+│       │   └── trezord-go.mk
+│       └── trezor-emu/          # Trezor Emulator package
 │           ├── Config.in
-│           └── trezor-emu.service
+│           └── trezor-emu.mk
 ├── overlay/                     # Root filesystem overlay
 │   ├── etc/
-│   │   ├── systemd/system/      # Systemd service files
-│   │   │   ├── trezor-emu.service
-│   │   │   ├── touchscreen-setup.service
-│   │   │   └── (runtime-created *.wants symlinks, none stored in overlay)
+│   │   ├── init.d/              # BusyBox init scripts
+│   │   │   ├── S05splash
+│   │   │   ├── S10airgap-firewall
+│   │   │   ├── S80touchscreen-calibration
+│   │   │   ├── S81ts-uinput
+│   │   │   ├── S90trezord
+│   │   │   └── S91trezor-emu
 │   │   └── udev/rules.d/        # Udev device rules
 │   │       └── 51-trezor.rules
 │   └── usr/local/bin/           # Custom scripts
@@ -344,8 +350,8 @@ systemctl list-units --type=service --state=running
 
 3. **Buildroot System Assembly**
    - Minimal Linux kernel with touchscreen drivers
-   - Systemd-based init system (networking disabled)
-   - Security-hardened BusyBox utilities
+   - BusyBox init system (networking disabled)
+   - Security-hardened BusyBox utilities with musl libc
    - USB and display drivers only
 
 4. **Image Generation**
@@ -383,9 +389,9 @@ Edit configurations in `br2-external/configs/` directory:
 
 #### Adding Custom Services
 
-1. Create service file in `overlay/etc/systemd/system/`
-2. Add enable symlink in appropriate `.target.wants/` directory
-3. Test with `systemctl status your-service`
+1. Create init script in `overlay/etc/init.d/S##your-service` (## = startup order number)
+2. Make it executable: `chmod +x overlay/etc/init.d/S##your-service`
+3. Follow BusyBox init script format with start/stop/restart cases
 
 ### Contributing
 
@@ -422,8 +428,8 @@ PitLab Wallet is designed to be completely offline. Verify air-gap status:
 # Check for network interfaces (should show only 'lo')
 ip link show
 
-# Verify no network services
-systemctl list-units --type=service | grep -i network
+# Check running processes for network services
+ps aux | grep -E 'dhcp|wpa|network'
 
 # Check for disabled wireless
 rfkill list all
@@ -512,15 +518,19 @@ calibrate-touchscreen
 
 **Problem**: Trezor services not starting
 ```bash
-# Check service status
-systemctl status trezord trezor-emu
+# Check if services are running
+ps aux | grep -E 'trezord|trezor-emu'
 
-# Check logs
-journalctl -u trezord -n 50
-journalctl -u trezor-emu -n 50
+# Check init scripts
+ls -la /etc/init.d/S*
 
-# Restart services
-sudo systemctl restart trezord trezor-emu
+# Restart services manually
+/etc/init.d/S90trezord restart
+/etc/init.d/S91trezor-emu restart
+
+# Check system logs
+tail -n 100 /var/log/messages
+dmesg | tail -50
 ```
 
 #### USB Connection Issues

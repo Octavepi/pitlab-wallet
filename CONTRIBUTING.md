@@ -32,7 +32,9 @@ PitLab Wallet aims to provide a **reproducible, secure, air-gapped hardware wall
 - Basic understanding of:
   - Buildroot embedded Linux system
   - Bash scripting
-  - Linux systemd services
+    - Linux kernel configuration
+  - BusyBox init scripts
+  - Device tree overlays (`.dtbo` files)
   - Cross-compilation
 
 ### Building PitLab Wallet from Source
@@ -54,7 +56,7 @@ The project uses Buildroot's BR2_EXTERNAL mechanism:
   - `configs/`: Board-specific defconfig files
   - `package/`: Custom package definitions (trezord-go, trezor-emu)
   - `board/`: Build scripts (post_build.sh, post_image.sh)
-- **`overlay/`**: Root filesystem overlay (systemd services, udev rules, scripts)
+- **`overlay/`**: Root filesystem overlay (init scripts, udev rules, custom scripts)
 - **`build.sh`**: Main build orchestration script
 
 ## 🔧 Making Changes
@@ -76,7 +78,9 @@ The project uses Buildroot's BR2_EXTERNAL mechanism:
 
 ⚠️ **Extra caution required** when modifying:
 - Network-related configurations (must remain disabled)
-- Systemd service security settings
+- Read-only root filesystem with tmpfs for volatile data
+- Init script hardening and minimal service exposure
+- Air-gapped operation (all networking disabled)
 - File permissions and ownership
 - udev rules for USB device access
 - BusyBox configuration (security hardening)
@@ -87,8 +91,9 @@ The project uses Buildroot's BR2_EXTERNAL mechanism:
 1. Build the image for your target board
 2. Flash to SD card and boot on actual hardware
 3. Verify:
-   - Display output and touchscreen work
-   - Trezor services start: `systemctl status trezor-emu trezord`
+   - Services start automatically: check `/etc/init.d/S*` scripts
+   - Trezor services running: `ps aux | grep -E 'trezord|trezor-emu'`
+   - Display and touchscreen functional
    - USB connection to Trezor Suite works
    - No network interfaces: `ip link show` (should only show `lo`)
 
@@ -128,7 +133,7 @@ Fixes: #123
 ### Code Review Checklist
 - [ ] No hardcoded credentials or secrets
 - [ ] No network-related code or commands
-- [ ] Systemd services have appropriate security settings
+- [ ] Init scripts follow BusyBox conventions and are executable
 - [ ] File permissions follow least-privilege principle
 - [ ] Changes don't weaken existing security features
 

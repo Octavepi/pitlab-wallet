@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+# Air-gap firewall enforcement
+#
+
+DAEMON=/usr/local/bin/airgap-firewall.sh
+PIDFILE=/var/run/airgap-firewall.pid
+
+start() {
+    printf "Starting airgap-firewall: "
+    start-stop-daemon -S -q -b -m -p $PIDFILE -x $DAEMON
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+
+stop() {
+    printf "Stopping airgap-firewall: "
+    start-stop-daemon -K -q -p $PIDFILE
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+
+restart() {
+    stop
+    sleep 1
+    start
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart|reload)
+        restart
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+
+exit 0

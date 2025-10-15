@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+# Start trezord bridge daemon
+#
+
+DAEMON=/usr/local/bin/trezord
+PIDFILE=/var/run/trezord.pid
+
+start() {
+    printf "Starting trezord: "
+    start-stop-daemon -S -q -b -m -p $PIDFILE -x $DAEMON -- -e 21324
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+
+stop() {
+    printf "Stopping trezord: "
+    start-stop-daemon -K -q -p $PIDFILE
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+
+restart() {
+    stop
+    sleep 1
+    start
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart|reload)
+        restart
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+
+exit 0

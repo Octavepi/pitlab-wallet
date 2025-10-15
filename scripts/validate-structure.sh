@@ -77,24 +77,22 @@ check_dir "br2-external/package"
 check_dir "br2-external/package/trezord-go"
 check_file "br2-external/package/trezord-go/Config.in"
 check_file "br2-external/package/trezord-go/trezord-go.mk"
-check_file "br2-external/package/trezord-go/trezord.service"
 
 echo "Trezor firmware checks removed."
 
 echo
 echo "Checking overlay structure..."
 check_dir "overlay"
-check_dir "overlay/etc/systemd/system"
-check_dir "overlay/etc/systemd/system"
-echo "(Systemd symlinks now unified under default.target; .wants directories for multi-user/graphical removed)"
+check_dir "overlay/etc/init.d"
+echo "(BusyBox init scripts in overlay/etc/init.d/S* will be auto-enabled at boot)"
 check_dir "overlay/etc/udev/rules.d"
 check_dir "overlay/usr/local/bin"
 
-# Main service files are trezor-emu.service and trezord.service
-check_file "overlay/etc/systemd/system/touchscreen-setup.service"
-check_file "overlay/etc/systemd/system/trezord.service"
-check_file "overlay/etc/systemd/system/trezor-emu.service"
+# Main init scripts
+check_file "overlay/etc/init.d/S90trezord"
+check_file "overlay/etc/init.d/S91trezor-emu"
 check_file "overlay/etc/udev/rules.d/51-trezor.rules"
+check_file "overlay/usr/local/bin/touchscreen-setup.sh"
 check_file "overlay/usr/local/bin/touchscreen-setup.sh"
 
 echo

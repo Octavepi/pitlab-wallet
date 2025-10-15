@@ -1,0 +1,46 @@
+#!/bin/sh
+#
+# tslib uinput remapper for touchscreen
+#
+
+DAEMON=/usr/local/bin/ts-uinput.sh
+PIDFILE=/var/run/ts-uinput.pid
+CALIBRATION_FILE=/var/lib/pitlab-wallet/pointercal
+
+start() {
+    # Only start if calibration file exists
+    if [ -f "$CALIBRATION_FILE" ]; then
+        printf "Starting ts-uinput: "
+        start-stop-daemon -S -q -b -m -p $PIDFILE -x $DAEMON
+        [ $? = 0 ] && echo "OK" || echo "FAIL"
+    fi
+}
+
+stop() {
+    printf "Stopping ts-uinput: "
+    start-stop-daemon -K -q -p $PIDFILE
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+
+restart() {
+    stop
+    sleep 1
+    start
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart|reload)
+        restart
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+
+exit 0

@@ -10,8 +10,9 @@ PitLab Wallet is designed as an **air-gapped hardware wallet appliance** with se
 
 ✅ **Network-based attacks**
 - No Wi-Fi, Ethernet, or Bluetooth connectivity
-- All networking packages disabled at build time
-- Systemd networking services masked
+- All network kernel drivers disabled
+- BusyBox init with minimal services
+- Air-gap firewall rules enforced at boot
 
 ✅ **Remote code execution**
 - No network services running
@@ -87,13 +88,9 @@ PitLab Wallet is designed as an **air-gapped hardware wallet appliance** with se
 
 5. **Air-Gap Verification**
    ```bash
-   # On the device, verify no network interfaces
-   ip link show  # Should only show 'lo'
-   
-   # Check for disabled services
-   systemctl list-units --type=service | grep -i network
-   
-   # Verify wireless is disabled
+   # Verify no network services running
+   ps aux | grep -E 'dhcp|wpa|network'
+   ip link show  # Should only show 'lo'   # Verify wireless is disabled
    rfkill list all
    ```
 
@@ -102,14 +99,14 @@ PitLab Wallet is designed as an **air-gapped hardware wallet appliance** with se
 1. **Security-Sensitive Changes**
    - NEVER add network functionality
    - Maintain read-only root filesystem
-   - Preserve systemd service security settings
+    - Preserve init script security practices
    - Follow principle of least privilege
 
 2. **Code Review Checklist**
    - [ ] No network-related packages or code
    - [ ] No hardcoded secrets or credentials
    - [ ] Proper file permissions (least privilege)
-   - [ ] Systemd service security directives maintained
+    - [ ] Init scripts properly restrict privileges
    - [ ] Build process remains reproducible
 
 3. **Testing Security**
@@ -120,8 +117,9 @@ PitLab Wallet is designed as an **air-gapped hardware wallet appliance** with se
    # Check for network commands
    grep -r "wget\|curl\|ssh\|ftp" br2-external/ overlay/
    
-   # Validate systemd services
-   grep -r "PrivateNetwork\|ProtectSystem" overlay/etc/systemd/system/
+   # Validate init scripts
+   ls -la overlay/etc/init.d/
+   grep -r "start-stop-daemon" overlay/etc/init.d/
    ```
 
 ## Reproducible Builds

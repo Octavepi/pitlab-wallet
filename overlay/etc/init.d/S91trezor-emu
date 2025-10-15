@@ -1,0 +1,79 @@
+#!/bin/sh
+#
+# Start Trezor Core emulator
+#
+
+DAEMON=/usr/local/bin/trezor-emu
+PIDFILE=/var/run/trezor-emu.pid
+
+# Wait for trezord, ts-uinput, and touchscreen calibration
+check_deps() {
+    # Wait up to 10 seconds for trezord
+    for i in $(seq 1 10); do
+        [ -f /var/run/trezord.pid ] && break
+        sleep 1
+    done
+    
+    # Check if calibration is needed
+    if [ ! -f /var/lib/pitlab-wallet/.calibrated ]; then
+        # Wait for calibration to complete
+        for i in $(seq 1 30); do
+            [ -f /var/lib/pitlab-wallet/.calibrated ] && break
+            sleep 1
+        done
+    fi
+    
+    # Wait for ts-uinput if calibration exists
+    if [ -f /var/lib/pitlab-wallet/pointercal ]; then
+        for i in $(seq 1 10); do
+            [ -f /var/run/ts-uinput.pid ] && break
+            sleep 1
+        done
+    fi
+}
+
+start() {
+    printf "Starting trezor-emu: "
+    check_deps
+    
+    # Set environment for framebuffer and touchscreen
+    export DISPLAY=:0
+    export SDL_VIDEODRIVER=fbcon
+    export SDL_FBDEV=/dev/fb0
+    export TSLIB_TSDEVICE=/dev/input/event0
+    export TSLIB_CALIBFILE=/var/lib/pitlab-wallet/pointercal
+    export TSLIB_CONFFILE=/etc/ts.conf
+    export TSLIB_PLUGINDIR=/usr/lib/ts
+    
+    start-stop-daemon -S -q -b -m -p $PIDFILE -x $DAEMON
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+
+stop() {
+    printf "Stopping trezor-emu: "
+    start-stop-daemon -K -q -p $PIDFILE
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+
+restart() {
+    stop
+    sleep 1
+    start
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart|reload)
+        restart
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+
+exit 0

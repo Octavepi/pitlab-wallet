@@ -37,7 +37,7 @@ ACTION=="add", SUBSYSTEM=="input", ENV{ID_INPUT_TOUCHSCREEN}=="1", ENV{TSLIB_CON
 ACTION=="add", SUBSYSTEM=="input", ENV{ID_INPUT_TOUCHSCREEN}=="1", ENV{TSLIB_TSDEVICE}="/dev/input/touchscreen"
 
 # Create device node for the primary touchscreen
-SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_TOUCHSCREEN}=="1", ATTRS{name}!="*Power*", ATTRS{name}!="*power*", TAG+="systemd", ENV{SYSTEMD_WANTS}+="touchscreen-setup.service"
+SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_TOUCHSCREEN}=="1", ATTRS{name}!="*Power*", ATTRS{name}!="*power*", MODE="0664", GROUP="input"
 
 # Tag the first touchscreen device found
 SUBSYSTEM=="input", KERNEL=="event0", ENV{ID_INPUT_TOUCHSCREEN}=="1", SYMLINK+="input/touchscreen0"

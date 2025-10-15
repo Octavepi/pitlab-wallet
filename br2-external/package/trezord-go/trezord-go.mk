@@ -9,21 +9,25 @@ TREZORD_GO_SITE = $(call github,trezor,trezord-go,$(TREZORD_GO_VERSION))
 TREZORD_GO_LICENSE = LGPL-3.0
 TREZORD_GO_LICENSE_FILES = COPYING
 
-TREZORD_GO_DEPENDENCIES = host-go libusb libudev hidapi
+TREZORD_GO_DEPENDENCIES = host-go libusb eudev hidapi
 
 # Build with Go
-TREZORD_GO_GOPATH = $(@D)/_gopath
 TREZORD_GO_MAKE_ENV = \
 	$(GO_TARGET_ENV) \
 	CGO_ENABLED=1 \
-	GOPATH=$(TREZORD_GO_GOPATH) \
-	PATH=$(TREZORD_GO_GOPATH)/bin:$(BR_PATH)
+	GOOS=linux \
+	GOARCH=arm64 \
+	CC=$(TARGET_CC) \
+	CXX=$(TARGET_CXX) \
+	CGO_CFLAGS="$(TARGET_CFLAGS)" \
+	CGO_LDFLAGS="$(TARGET_LDFLAGS)" \
+	GOPROXY=https://proxy.golang.org,direct
 
 define TREZORD_GO_BUILD_CMDS
-	$(TREZORD_GO_MAKE_ENV) $(GO) build \
-		-o $(@D)/trezord \
+	cd $(@D) && $(TREZORD_GO_MAKE_ENV) $(HOST_DIR)/bin/go build \
+		-o trezord \
 		-ldflags "-s -w" \
-		$(@D)
+		.
 endef
 
 define TREZORD_GO_INSTALL_TARGET_CMDS

@@ -102,7 +102,7 @@ BR2_ROOTFS_POST_IMAGE_SCRIPT="$(BR2_EXTERNAL_PITLAB_WALLET_PATH)/board/post_imag
 BR2_ROOTFS_POST_SCRIPT_ARGS="$(BR2_EXTERNAL_PITLAB_WALLET_PATH)"
 
 # Overlay for PitLab Wallet binaries and configuration
-BR2_ROOTFS_OVERLAY="$(BR2_EXTERNAL_PITLAB_WALLET_PATH)/overlay"
+BR2_ROOTFS_OVERLAY="$(BR2_EXTERNAL_PITLAB_WALLET_PATH)/../overlay"
 
 # Download optimization and mirrors
 BR2_MIRRORS="https://mirrors.kernel.org/gnu/ https://ftpmirror.gnu.org/ https://mirror.leaseweb.com/gnu/"

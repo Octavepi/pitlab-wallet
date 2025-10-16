@@ -33,8 +33,11 @@ if [ -d "$IMAGES_DIR/rpi-firmware" ]; then
     fi
 fi
 
-# Create basic config.txt
-cat > "$IMAGES_DIR/config.txt" << EOF
+# Create firmware directory for boot config files
+mkdir -p "$IMAGES_DIR/firmware"
+
+# Create boot partition config.txt in firmware/
+cat > "$IMAGES_DIR/firmware/config.txt" << EOF
 # PitLab Wallet Configuration
 # Generated for $BOARD with $DISPLAY display
 
@@ -53,74 +56,6 @@ disable_splash=1
 enable_gic=1
 arm_64bit=1
 
-EOF
-
-# Create basic cmdline.txt
-cat > "$IMAGES_DIR/cmdline.txt" << 'EOF'
-console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait quiet logo.nologo modules_load=dwc2,g_ether fbcon=map:1
-EOF
-
-# Configure display-specific settings
-echo "# Display configuration for $DISPLAY" >> "$IMAGES_DIR/config.txt"
-
-if [ "$DISPLAY" = "hdmi" ]; then
-    cat >> "$IMAGES_DIR/config.txt" << EOF
-
-# HDMI Display Configuration
-dtoverlay=vc4-kms-v3d
-hdmi_force_hotplug=1
-framebuffer_width=800
-framebuffer_height=480
-hdmi_group=2
-hdmi_mode=87
-hdmi_cvt=800 480 60 6 0 0 0
-EOF
-else
-        # For all other displays, choose an appropriate overlay
-        # Map known vendor names to firmware overlay candidates
-        CANDIDATES=()
-        case "$DISPLAY" in
-            jun-electron*|jun-electron-35*|jun-electron-3.5* )
-                # Jun-Electron 3.5" usually ili9486 + XPT2046
-                CANDIDATES=(waveshare35a pitft35-resistive rpi-display)
-                ;;
-            waveshare35a|waveshare35b|pitft35-resistive|rpi-display)
-                CANDIDATES=("$DISPLAY")
-                ;;
-            *)
-                # Fallbacks for unknown names
-                CANDIDATES=("$DISPLAY" waveshare35a pitft35-resistive rpi-display)
-                ;;
-        esac
-
-        # Pick first available overlay from candidates
-        SELECTED_OVERLAY=""
-        for ov in "${CANDIDATES[@]}"; do
-            if [ -f "$IMAGES_DIR/overlays/${ov}.dtbo" ]; then
-                SELECTED_OVERLAY="$ov"
-                break
-            fi
-        done
-
-        if [ -z "$SELECTED_OVERLAY" ]; then
-                echo "WARNING: No matching overlay found for '$DISPLAY'. Available overlays include:" >&2
-                ls -1 "$IMAGES_DIR/overlays" 2>/dev/null | head -50 | sed 's/^/  - /' >&2 || true
-                # Still write the requested name; firmware will ignore if missing.
-                SELECTED_OVERLAY="$DISPLAY"
-        fi
-
-        cat >> "$IMAGES_DIR/config.txt" << EOF
-
-# SPI Display Configuration: $DISPLAY
-dtoverlay=$SELECTED_OVERLAY,rotate=$ROTATION,speed=32000000,fps=60
-# Common 3.5" TFT resolution
-framebuffer_width=480
-framebuffer_height=320
-EOF
-fi
-
-# Add common display settings
-cat >> "$IMAGES_DIR/config.txt" << EOF
 
 # Common display settings
 max_usb_current=1
@@ -144,6 +79,69 @@ dtparam=dr_mode=peripheral
 dtparam=act_led_trigger=none
 dtparam=pwr_led_trigger=none
 EOF
+
+# Create boot partition cmdline.txt in firmware/
+cat > "$IMAGES_DIR/firmware/cmdline.txt" << 'EOF'
+console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait quiet logo.nologo modules_load=dwc2,g_ether fbcon=map:1
+EOF
+
+# Configure display-specific settings
+echo "" >> "$IMAGES_DIR/firmware/config.txt"
+echo "# Display configuration for $DISPLAY" >> "$IMAGES_DIR/firmware/config.txt"
+
+if [ "$DISPLAY" = "hdmi" ]; then
+    cat >> "$IMAGES_DIR/firmware/config.txt" << EOF
+# HDMI Display Configuration
+dtoverlay=vc4-kms-v3d
+hdmi_force_hotplug=1
+framebuffer_width=800
+framebuffer_height=480
+hdmi_group=2
+hdmi_mode=87
+hdmi_cvt=800 480 60 6 0 0 0
+EOF
+else
+    # For all other displays, choose an appropriate overlay
+    # Map known vendor names to firmware overlay candidates
+    CANDIDATES=()
+    case "$DISPLAY" in
+        jun-electron*|jun-electron-35*|jun-electron-3.5* )
+            # Jun-Electron 3.5" usually ili9486 + XPT2046
+            CANDIDATES=(waveshare35a pitft35-resistive rpi-display)
+            ;;
+        waveshare35a|waveshare35b|pitft35-resistive|rpi-display)
+            CANDIDATES=("$DISPLAY")
+            ;;
+        *)
+            # Fallbacks for unknown names
+            CANDIDATES=("$DISPLAY" waveshare35a pitft35-resistive rpi-display)
+            ;;
+    esac
+
+    # Pick first available overlay from candidates
+    SELECTED_OVERLAY=""
+    for ov in "${CANDIDATES[@]}"; do
+        if [ -f "$IMAGES_DIR/overlays/${ov}.dtbo" ]; then
+            SELECTED_OVERLAY="$ov"
+            break
+        fi
+    done
+
+    if [ -z "$SELECTED_OVERLAY" ]; then
+        echo "WARNING: No matching overlay found for '$DISPLAY'. Available overlays include:" >&2
+        ls -1 "$IMAGES_DIR/overlays" 2>/dev/null | head -50 | sed 's/^/  - /' >&2 || true
+        # Still write the requested name; firmware will ignore if missing.
+        SELECTED_OVERLAY="$DISPLAY"
+    fi
+
+    cat >> "$IMAGES_DIR/firmware/config.txt" << EOF
+# SPI Display Configuration: $DISPLAY
+dtoverlay=$SELECTED_OVERLAY,rotate=$ROTATION,speed=32000000,fps=60
+# Common 3.5" TFT resolution
+framebuffer_width=480
+framebuffer_height=320
+EOF
+fi
 
 echo "Generating SD card image with genimage..."
 
@@ -185,7 +183,7 @@ fi
     echo "Rotation: $ROTATION"
     echo
     echo "Boot files present:"
-    for f in start.elf start4.elf fixup.dat fixup4.dat Image config.txt cmdline.txt; do
+    for f in start.elf start4.elf fixup.dat fixup4.dat Image firmware/config.txt firmware/cmdline.txt; do
         if [ -f "$IMAGES_DIR/$f" ]; then echo "  [x] $f"; else echo "  [ ] $f"; fi
     done
     echo

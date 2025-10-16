@@ -22,8 +22,16 @@ echo "Rotation: $ROTATION"
 # Use the genimage configuration from br2-external
 GENIMAGE_CFG="${BR2_EXTERNAL_PATH}/board/genimage.cfg"
 
-# Create boot partition directory structure if it doesn't exist
-mkdir -p "$IMAGES_DIR/rpi-firmware"
+# Ensure rpi-firmware contents are at the root of the boot partition layout
+# Buildroot typically drops firmware into images/rpi-firmware; flatten it for genimage
+if [ -d "$IMAGES_DIR/rpi-firmware" ]; then
+    # Copy firmware blobs (start*.elf, fixup*.dat, etc.) to images root
+    cp -a "$IMAGES_DIR/rpi-firmware/"* "$IMAGES_DIR/" 2>/dev/null || true
+    # Ensure overlays directory is present at images root
+    if [ -d "$IMAGES_DIR/rpi-firmware/overlays" ] && [ ! -d "$IMAGES_DIR/overlays" ]; then
+        cp -a "$IMAGES_DIR/rpi-firmware/overlays" "$IMAGES_DIR/overlays"
+    fi
+fi
 
 # Create basic config.txt
 cat > "$IMAGES_DIR/config.txt" << EOF
@@ -33,7 +41,9 @@ cat > "$IMAGES_DIR/config.txt" << EOF
 # Basic Pi configuration
 gpu_mem=64
 disable_overscan=1
-enable_uart=0
+enable_uart=1
+dtoverlay=disable-bt  # free PL011 for serial console
+kernel=Image
 
 # Boot optimization
 boot_delay=0
@@ -47,7 +57,7 @@ EOF
 
 # Create basic cmdline.txt
 cat > "$IMAGES_DIR/cmdline.txt" << 'EOF'
-console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait quiet logo.nologo modules_load=dwc2,g_ether
+console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait quiet logo.nologo modules_load=dwc2,g_ether fbcon=map:1
 EOF
 
 # Configure display-specific settings
@@ -66,11 +76,46 @@ hdmi_mode=87
 hdmi_cvt=800 480 60 6 0 0 0
 EOF
 else
-    # For all other displays, use device tree overlay
-    cat >> "$IMAGES_DIR/config.txt" << EOF
+        # For all other displays, choose an appropriate overlay
+        # Map known vendor names to firmware overlay candidates
+        CANDIDATES=()
+        case "$DISPLAY" in
+            jun-electron*|jun-electron-35*|jun-electron-3.5* )
+                # Jun-Electron 3.5" usually ili9486 + XPT2046
+                CANDIDATES=(waveshare35a pitft35-resistive rpi-display)
+                ;;
+            waveshare35a|waveshare35b|pitft35-resistive|rpi-display)
+                CANDIDATES=("$DISPLAY")
+                ;;
+            *)
+                # Fallbacks for unknown names
+                CANDIDATES=("$DISPLAY" waveshare35a pitft35-resistive rpi-display)
+                ;;
+        esac
+
+        # Pick first available overlay from candidates
+        SELECTED_OVERLAY=""
+        for ov in "${CANDIDATES[@]}"; do
+            if [ -f "$IMAGES_DIR/overlays/${ov}.dtbo" ]; then
+                SELECTED_OVERLAY="$ov"
+                break
+            fi
+        done
+
+        if [ -z "$SELECTED_OVERLAY" ]; then
+                echo "WARNING: No matching overlay found for '$DISPLAY'. Available overlays include:" >&2
+                ls -1 "$IMAGES_DIR/overlays" 2>/dev/null | head -50 | sed 's/^/  - /' >&2 || true
+                # Still write the requested name; firmware will ignore if missing.
+                SELECTED_OVERLAY="$DISPLAY"
+        fi
+
+        cat >> "$IMAGES_DIR/config.txt" << EOF
 
 # SPI Display Configuration: $DISPLAY
-dtoverlay=$DISPLAY,rotate=$ROTATION,speed=32000000,fps=60
+dtoverlay=$SELECTED_OVERLAY,rotate=$ROTATION,speed=32000000,fps=60
+# Common 3.5" TFT resolution
+framebuffer_width=480
+framebuffer_height=320
 EOF
 fi
 
@@ -86,6 +131,10 @@ config_hdmi_boost=5
 dtparam=audio=off
 dtparam=spi=on
 dtparam=i2c_arm=on
+
+# Framebuffer console on first framebuffer if present
+framebuffer_depth=32
+disable_fw_kms_setup=1
 
 # USB gadget mode - Pi acts as Trezor hardware wallet device
 dtoverlay=dwc2
@@ -125,6 +174,43 @@ else
     echo "❌ Failed to generate sdcard.img"
     exit 1
 fi
+
+# Write a BOOTINFO.txt to assist headless debugging
+{
+    echo "=== PitLab Wallet Boot Info ==="
+    echo "Date: $(date)"
+    echo "Board: $BOARD"
+    echo "Display: $DISPLAY"
+        echo "Overlay selected: ${SELECTED_OVERLAY:-n/a}"
+    echo "Rotation: $ROTATION"
+    echo
+    echo "Boot files present:"
+    for f in start.elf start4.elf fixup.dat fixup4.dat Image config.txt cmdline.txt; do
+        if [ -f "$IMAGES_DIR/$f" ]; then echo "  [x] $f"; else echo "  [ ] $f"; fi
+    done
+    echo
+    echo "DTBs present (Pi4):"
+    for d in bcm2711-rpi-4-b.dtb bcm2711-rpi-400.dtb bcm2711-rpi-cm4.dtb bcm2711-rpi-cm4s.dtb; do
+        if [ -f "$IMAGES_DIR/$d" ]; then echo "  [x] $d"; fi
+    done
+    echo
+    echo "Overlays directory:"
+    if [ -d "$IMAGES_DIR/overlays" ]; then
+        echo "  overlays/ exists"
+        if [ -f "$IMAGES_DIR/overlays/${DISPLAY}.dtbo" ]; then
+            echo "  [x] overlays/${DISPLAY}.dtbo"
+        else
+            echo "  [ ] overlays/${DISPLAY}.dtbo (missing)"
+            echo "  Available overlays (first 20):"
+            ls -1 "$IMAGES_DIR/overlays" | head -20 | sed 's/^/    - /'
+        fi
+    else
+        echo "  overlays/ missing"
+    fi
+    echo
+    echo "Serial console: 115200 8N1 on GPIO14 (TXD), GPIO15 (RXD), GND."
+    echo "Set enable_uart=1 and dtoverlay=disable-bt (applied)."
+} > "$IMAGES_DIR/BOOTINFO.txt"
 
 # Create a summary file
 cat > "$IMAGES_DIR/build-info.txt" << EOF

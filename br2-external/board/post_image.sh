@@ -98,16 +98,22 @@ EOF
 
 echo "Generating SD card image with genimage..."
 
+# Use a temp directory outside of IMAGES_DIR to avoid recursive copy issues
+GENIMAGE_TMP="$(dirname "$IMAGES_DIR")/genimage.tmp"
+
+# Clean up any existing temp directory first
+rm -rf "$GENIMAGE_TMP"
+
 # Generate the final image
 genimage \
     --rootpath "$IMAGES_DIR" \
-    --tmppath "$IMAGES_DIR/genimage.tmp" \
+    --tmppath "$GENIMAGE_TMP" \
     --inputpath "$IMAGES_DIR" \
     --outputpath "$IMAGES_DIR" \
     --config "$GENIMAGE_CFG"
 
 # Clean up temporary files
-rm -rf "$IMAGES_DIR/genimage.tmp"
+rm -rf "$GENIMAGE_TMP"
 
 # Verify the generated image
 if [ -f "$IMAGES_DIR/sdcard.img" ]; then

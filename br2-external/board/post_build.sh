@@ -71,12 +71,12 @@ chown -R 1000:1000 "$TARGET_DIR/var/lib/trezor" || true
 # Ensure proper permissions for PitLab Wallet binaries
 if [ -f "$TARGET_DIR/usr/local/bin/trezord" ]; then
     chmod 755 "$TARGET_DIR/usr/local/bin/trezord"
-    chown root:root "$TARGET_DIR/usr/local/bin/trezord"
+    chown root:root "$TARGET_DIR/usr/local/bin/trezord" || true
 fi
 
 if [ -f "$TARGET_DIR/usr/local/bin/trezor-emu" ]; then
     chmod 755 "$TARGET_DIR/usr/local/bin/trezor-emu"
-    chown root:root "$TARGET_DIR/usr/local/bin/trezor-emu"
+    chown root:root "$TARGET_DIR/usr/local/bin/trezor-emu" || true
 fi
 
 # Disable root login for security

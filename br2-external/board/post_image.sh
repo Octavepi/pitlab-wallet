@@ -151,6 +151,81 @@ GENIMAGE_TMP="$(dirname "$IMAGES_DIR")/genimage.tmp"
 # Clean up any existing temp directory first
 rm -rf "$GENIMAGE_TMP"
 
+# Build a dynamic genimage configuration to include all present DTBs, overlays, and firmware files
+CFG="$IMAGES_DIR/genimage.auto.cfg"
+cat > "$CFG" << 'EOF_GEN'
+image boot.vfat {
+    vfat {
+        extraargs = "-n boot"
+    }
+    size = 32M
+}
+
+image sdcard.img {
+    hdimage { }
+
+    partition boot {
+        partition-type = 0xC
+        bootable = "true"
+        image = "boot.vfat"
+    }
+
+    partition rootfs {
+        partition-type = 0x83
+        image = "rootfs.ext4"
+    }
+}
+EOF_GEN
+
+# Helper to append a file entry into boot.vfat with source path and destination name
+append_file_entry() {
+    local src="$1"   # relative to IMAGES_DIR
+    local name="$2"  # path inside the VFAT
+    # sanitize name default
+    if [ -z "$name" ]; then name="$(basename "$src")"; fi
+    # Append to vfat section by inserting before closing braces using a here-doc and sed
+    awk -v src="$src" -v name="$name" '
+        BEGIN{printed=0}
+        {
+            print $0
+            if (!printed && $0 ~ /^\s*vfat\s*\{/){
+                print "    file " name " {"
+                print "      image = \"" src "\""
+                print "    }"
+                printed=1
+            }
+        }
+    ' "$CFG" > "$CFG.tmp" && mv "$CFG.tmp" "$CFG"
+}
+
+# Include firmware directory (will contain config.txt and cmdline.txt)
+if [ -d "$IMAGES_DIR/firmware" ]; then
+    append_file_entry "firmware" "firmware"
+fi
+
+# Include firmware blobs if present
+for f in start.elf start4.elf start_cd.elf start_db.elf start_x.elf \
+                 fixup.dat fixup4.dat fixup_cd.dat fixup_db.dat fixup_x.dat; do
+    if [ -f "$IMAGES_DIR/$f" ]; then
+        append_file_entry "$f" "$f"
+    fi
+done
+
+# Include all DTBs: flatten from any subdir (e.g., broadcom/) to root of boot
+while IFS= read -r -d '' dtb; do
+    rel="${dtb#$IMAGES_DIR/}"
+    base="$(basename "$dtb")"
+    append_file_entry "$rel" "$base"
+done < <(find "$IMAGES_DIR" -maxdepth 2 -type f -name "*.dtb" -print0)
+
+# Include overlays directory with all .dtbo files
+if [ -d "$IMAGES_DIR/overlays" ]; then
+    append_file_entry "overlays" "overlays"
+fi
+
+# Use auto-generated config instead of the static one
+GENIMAGE_CFG="$CFG"
+
 # Generate the final image
 genimage \
     --rootpath "$IMAGES_DIR" \

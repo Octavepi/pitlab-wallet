@@ -33,6 +33,29 @@ if [ -d "$IMAGES_DIR/rpi-firmware" ]; then
     fi
 fi
 
+# Copy kernel Image and DTB files from kernel build to images root
+# Kernel build places them in arch/arm64/boot/ or arch/arm/boot/
+LINUX_BUILD_DIR="${IMAGES_DIR}/../build/linux-custom"
+if [ -d "$LINUX_BUILD_DIR" ]; then
+    # Copy kernel Image
+    for img_path in "$LINUX_BUILD_DIR/arch/arm64/boot/Image" "$LINUX_BUILD_DIR/arch/arm/boot/zImage"; do
+        if [ -f "$img_path" ]; then
+            echo "Copying kernel Image from $img_path to $IMAGES_DIR/Image"
+            cp -f "$img_path" "$IMAGES_DIR/Image" 2>/dev/null || true
+            break
+        fi
+    done
+    
+    # Copy DTB files
+    for dtb_dir in "$LINUX_BUILD_DIR/arch/arm64/boot/dts/broadcom" "$LINUX_BUILD_DIR/arch/arm/boot/dts/broadcom"; do
+        if [ -d "$dtb_dir" ]; then
+            echo "Copying DTBs from $dtb_dir to $IMAGES_DIR/"
+            cp -f "$dtb_dir"/bcm*.dtb "$IMAGES_DIR/" 2>/dev/null || true
+            break
+        fi
+    done
+fi
+
 # Create firmware directory for boot config files
 mkdir -p "$IMAGES_DIR/firmware"
 
@@ -197,6 +220,11 @@ append_file_entry() {
         }
     ' "$CFG" > "$CFG.tmp" && mv "$CFG.tmp" "$CFG"
 }
+
+# Include kernel Image
+if [ -f "$IMAGES_DIR/Image" ]; then
+    append_file_entry "Image" "Image"
+fi
 
 # Include firmware directory (will contain config.txt and cmdline.txt)
 if [ -d "$IMAGES_DIR/firmware" ]; then

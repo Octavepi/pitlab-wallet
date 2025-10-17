@@ -129,15 +129,19 @@ else
     CANDIDATES=()
     case "$DISPLAY" in
         jun-electron*|jun-electron-35*|jun-electron-3.5* )
-            # Jun-Electron 3.5" usually ili9486 + XPT2046
-            CANDIDATES=(waveshare35a pitft35-resistive rpi-display)
+            # Jun-Electron 3.5" uses ILI9486 + XPT2046
+            # Use fbtft overlay with ILI9486 driver for better compatibility
+            CANDIDATES=(tinylcd35 pitft35-resistive fbtft)
             ;;
-        waveshare35a|waveshare35b|pitft35-resistive|rpi-display)
+        waveshare35a|waveshare35b)
+            CANDIDATES=(tinylcd35 pitft35-resistive fbtft)
+            ;;
+        pitft35-resistive|tinylcd35|rpi-display)
             CANDIDATES=("$DISPLAY")
             ;;
         *)
             # Fallbacks for unknown names
-            CANDIDATES=("$DISPLAY" waveshare35a pitft35-resistive rpi-display)
+            CANDIDATES=("$DISPLAY" tinylcd35 pitft35-resistive fbtft)
             ;;
     esac
 
@@ -157,13 +161,26 @@ else
         SELECTED_OVERLAY="$DISPLAY"
     fi
 
-    cat >> "$IMAGES_DIR/firmware/config.txt" << EOF
+    # Configure overlay parameters based on display type
+    if [ "$SELECTED_OVERLAY" = "fbtft" ]; then
+        # Generic fbtft overlay for ILI9486-based displays
+        cat >> "$IMAGES_DIR/firmware/config.txt" << EOF
+# SPI Display Configuration: $DISPLAY (using fbtft with ILI9486)
+dtoverlay=fbtft,spi0-0,ili9486,rotate=$ROTATION,speed=32000000,fps=60,width=320,height=480,bgr=1
+# Framebuffer resolution for 3.5" TFT
+framebuffer_width=480
+framebuffer_height=320
+EOF
+    else
+        # Use standard overlay with parameters
+        cat >> "$IMAGES_DIR/firmware/config.txt" << EOF
 # SPI Display Configuration: $DISPLAY
 dtoverlay=$SELECTED_OVERLAY,rotate=$ROTATION,speed=32000000,fps=60
 # Common 3.5" TFT resolution
 framebuffer_width=480
 framebuffer_height=320
 EOF
+    fi
 fi
 
 echo "Generating SD card image with genimage..."

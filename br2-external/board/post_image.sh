@@ -147,12 +147,16 @@ elif [ -n "$DISPLAY_INFO" ]; then
         eval $(parse_display_config "$DISPLAY_INFO")
     fi
     
-    # Copy device tree overlay from lcd-show if available
-    if [ -n "$LCD_SHOW_DIR" ] && [ -n "$overlay" ]; then
-        if [ -f "$LCD_SHOW_DIR/usr/${overlay}-overlay.dtb" ]; then
+    # Copy device tree overlay from lcd-show if available; otherwise try built-in overlays
+    if [ -n "$overlay" ]; then
+        if [ -n "$LCD_SHOW_DIR" ] && [ -f "$LCD_SHOW_DIR/usr/${overlay}-overlay.dtb" ]; then
             mkdir -p "$IMAGES_DIR/overlays"
             cp "$LCD_SHOW_DIR/usr/${overlay}-overlay.dtb" "$IMAGES_DIR/overlays/${overlay}.dtbo"
             echo "Copied overlay: ${overlay}-overlay.dtb"
+        elif [ -d "$IMAGES_DIR/overlays" ] && [ -f "$IMAGES_DIR/overlays/${overlay}.dtbo" ]; then
+            echo "Using built-in firmware overlay: ${overlay}.dtbo"
+        else
+            echo "WARNING: Overlay ${overlay}.dtbo not found in lcd-show or firmware overlays"
         fi
     fi
     
@@ -180,13 +184,17 @@ EOF
         fi
     fi
     
-    # Configure touchscreen calibration if needed
-    if [ -n "$touch" ] && [ "$touch" != "none" ] && [ -n "$LCD_SHOW_DIR" ]; then
+    # Configure touchscreen calibration if possible
+    if [ -n "$touch" ] && [ "$touch" != "none" ]; then
         mkdir -p "$IMAGES_DIR/firmware/xorg.conf.d"
-        CALIB_FILE="$LCD_SHOW_DIR/usr/99-calibration.conf-${DISPLAY#lcd}-$ROTATION"
-        if [ -f "$CALIB_FILE" ]; then
-            cp "$CALIB_FILE" "$IMAGES_DIR/firmware/xorg.conf.d/99-calibration.conf"
-            echo "Copied touch calibration: $(basename "$CALIB_FILE")"
+        if [ -n "$LCD_SHOW_DIR" ]; then
+            CALIB_FILE="$LCD_SHOW_DIR/usr/99-calibration.conf-${DISPLAY#lcd}-$ROTATION"
+            if [ -f "$CALIB_FILE" ]; then
+                cp "$CALIB_FILE" "$IMAGES_DIR/firmware/xorg.conf.d/99-calibration.conf"
+                echo "Copied touch calibration: $(basename "$CALIB_FILE")"
+            fi
+        else
+            echo "Note: No lcd-show repo present; using libinput defaults for touch"
         fi
     fi
 else

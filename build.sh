@@ -162,11 +162,12 @@ esac
 
 log_info "Building PitLab Wallet for $BOARD with $DISPLAY display (rotation: $ROTATION°)"
 
-# Verify LCD-show directory exists
+# Optional: LCD-show directory (for copying overlays/calibration if available)
 if [[ -z "$LCD_SHOW_PATH" ]] || [[ ! -d "$LCD_SHOW_PATH" ]]; then
-    log_warn "LCD-show directory not found at: $LCD_SHOW_PATH"
-    log_warn "Display drivers may not be fully configured"
-    log_warn "Clone lcd-show-fork to: $(dirname "${BASH_SOURCE[0]}")/../lcd-show-fork"
+    log_info "LCD-show repo not found (optional). We'll use built-in overlays where possible."
+    log_info "If you use SPI displays like lcd35 and need tft35a overlay/calibration, place lcd-show at: $(dirname "${BASH_SOURCE[0]}")/../lcd-show-fork"
+else
+    log_info "Found LCD-show at: $LCD_SHOW_PATH (will copy overlays/calibration if needed)"
 fi
 
 # Derive per-config Buildroot output directory (relative to buildroot/)

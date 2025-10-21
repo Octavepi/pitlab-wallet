@@ -164,21 +164,17 @@ lcd-show-fork/usr/tft35a-overlay.dtb
 
 ## LCD-show Fork Integration
 
-The system expects the lcd-show-fork repository to be at:
-```
-/home/octave/Octavepi/lcd-show-fork/
-```
+The lcd-show repository is OPTIONAL and only used to copy overlays/calibration when present.
 
-Or relative to build.sh:
-```
-../lcd-show-fork/
-```
+If available, place it alongside this repo as `../lcd-show-fork` (default autodetect), or set `PITLAB_LCD_SHOW_DIR` to your path.
 
-### Required Files from lcd-show-fork
+When absent, the build uses firmware-provided overlays where available and standard libinput defaults for touch.
+
+### Optional Files from lcd-show-fork (if present)
 
 - **Device Tree Overlays**: `usr/*.dtb`, `usr/*.dtbo`
 - **Calibration Files**: `usr/99-calibration.conf-*`
-- **FBCP Binary**: `usr/rpi-fbcp/` (optional, can be built separately)
+- **FBCP Binary**: `usr/rpi-fbcp/` (optional; you can also build rpi-fbcp in Buildroot)
 
 ## Troubleshooting
 

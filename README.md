@@ -15,21 +15,19 @@ PitLab Wallet is a security-focused cryptocurrency hardware wallet built on Rasp
 This repository is part of the **PITLAB** ecosystem — a collection of open-source tools powered by the $PITLAB utility token:
 
 1. **[pitlab-meme](https://github.com/Octavepi/pitlab-meme)** - Utility token ($PITLAB / ARMPIT) on Base
-   - Powers premium features across PITLAB tools
+   - Powers premium features in pitlab-eltmm
    - 1/3 burned, 1/3 to holders, 1/3 to development
-2. **[pitlab-eltmm](https://github.com/Octavepi/pitlab-eltmm)** - Ethical token launch tool
+2. **[pitlab-eltmm](https://github.com/Octavepi/pitlab-eltmm)** - Ethical token launch tool ⚡ *Premium*
    - MEV-protected fair launches
-   - Premium features unlocked with $PITLAB
-3. **[pitlab-wallet](https://github.com/Octavepi/pitlab-wallet)** (THIS REPO) - Raspberry Pi hardware wallet
+   - Premium features unlocked with $PITLAB payments
+3. **[pitlab-wallet](https://github.com/Octavepi/pitlab-wallet)** (THIS REPO) - Raspberry Pi hardware wallet 🎁 *Free*
    - Trezor-compatible air-gapped security
-   - DIY-friendly open hardware
-4. **[pitlab-website](https://github.com/Octavepi/pitlab-website)** - Official ecosystem hub
+   - FREE gift to crypto community with ❤️
+4. **[pitlab-website](https://github.com/Octavepi/pitlab-website)** - Official ecosystem hub 🎁 *Free*
    - Documentation and whitepapers
    - Web3 interface for PITLAB tools
 
-**Future projects** will integrate $PITLAB as the universal utility token for the ecosystem.
-
-**Mission:** Support open hardware, DIY security, and grassroots developers through transparent, community-led development.
+**This wallet is completely FREE** — no fees, no subscriptions, no hidden costs. Development is funded by pitlab-eltmm revenue and the $PITLAB ecosystem. We believe in open hardware, DIY security, and giving back to the crypto community that made this all possible.
 
 ## Acknowledgements
 

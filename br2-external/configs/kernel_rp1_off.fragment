@@ -1,0 +1,23 @@
+# Disable Raspberry Pi 5 RP1-specific drivers (not present on Pi 3)
+# These were causing module undefined symbol references to __aeabi_* division helpers
+# because they are out-of-tree/new drivers relying on 64-bit division in modules.
+# On Pi 3, they are unnecessary and should be off.
+
+# RP1 display and multimedia
+# (Exact symbols vary by kernel version; include all known names)
+# DRM RP1 DPI
+# CONFIG_DRM_RP1_DPI is not set
+# Alternate symbol naming seen in some trees
+# CONFIG_DRM_RP1 is not set
+
+# RP1 Camera Front End
+# CONFIG_VIDEO_RP1_CFE is not set
+
+# RP1 PWM PIO
+# CONFIG_PWM_PIO_RP1 is not set
+
+# RP1 ADC (hwmon)
+# CONFIG_SENSORS_RP1_ADC is not set
+
+# Disable DesignWare I2C core (not used on BCM2710 Pi 3)
+# CONFIG_I2C_DESIGNWARE_CORE is not set

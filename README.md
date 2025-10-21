@@ -1,29 +1,35 @@
 # PitLab Wallet: Air-Gapped Hardware Wallet Appliance
 
-[![Build Status](https://github.com/Octavepi/pitlab-wallet/actions/workflows/build.yml/badge.svg)](https://github.com/Octavepi/pitlab-wallet/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
 > **Tagline:** *Sweat-secured. ARM-powered. Built in the PIT.*
 
-**An air-gapped hardware wallet appliance for Raspberry Pi**
+[![Build Status](https://github.com/Octavepi/pitlab-wallet/actions/workflows/build.yml/badge.svg)](https://github.com/Octavepi/pitlab-wallet/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Raspberry Pi](https://img.shields.io/badge/Hardware-Raspberry%20Pi-red.svg)](https://www.raspberrypi.org)
 
-PitLab Wallet is a security-focused, air-gapped cryptocurrency hardware wallet built on Raspberry Pi, running Trezor Core (emulator) and trezord-go bridge on a minimal Buildroot-based operating system.
+**An air-gapped hardware wallet appliance for Raspberry Pi — Trezor-compatible, fully open-source, DIY-friendly.**
+
+PitLab Wallet is a security-focused cryptocurrency hardware wallet built on Raspberry Pi, running Trezor Core (emulator) and trezord-go bridge on a minimal Buildroot-based operating system. Development is funded through the $PITLAB ecosystem.
 
 ## The PITLAB Ecosystem
 
-This repository is part of a three-component ecosystem:
+This repository is part of the **PITLAB** ecosystem — a collection of open-source tools powered by the $PITLAB utility token:
 
-1. **[pitlab-meme](https://github.com/Octavepi/pitlab-meme)** - Token contracts and deployment
-   - ERC-20 token ($PITLAB / ARMPIT) on Base chain
-   - Supports development of this hardware wallet
-2. **[pitlab-wallet](https://github.com/Octavepi/pitlab-wallet)** (THIS REPO) - Raspberry Pi hardware wallet
-   - Trezor-compatible open-source hardware
-   - DIY-friendly build process
-3. **[pitlab-website](https://github.com/Octavepi/pitlab-website)** - Official website and docs
-   - Whitepaper and documentation
-   - Build guides and tutorials
+1. **[pitlab-meme](https://github.com/Octavepi/pitlab-meme)** - Utility token ($PITLAB / ARMPIT) on Base
+   - Powers premium features across PITLAB tools
+   - 1/3 burned, 1/3 to holders, 1/3 to development
+2. **[pitlab-eltmm](https://github.com/Octavepi/pitlab-eltmm)** - Ethical token launch tool
+   - MEV-protected fair launches
+   - Premium features unlocked with $PITLAB
+3. **[pitlab-wallet](https://github.com/Octavepi/pitlab-wallet)** (THIS REPO) - Raspberry Pi hardware wallet
+   - Trezor-compatible air-gapped security
+   - DIY-friendly open hardware
+4. **[pitlab-website](https://github.com/Octavepi/pitlab-website)** - Official ecosystem hub
+   - Documentation and whitepapers
+   - Web3 interface for PITLAB tools
 
-**Mission:** Support open hardware, DIY security, and grassroots developers through transparent, community-led development. The $PITLAB token exists to reward and fund development of this open-source hardware wallet.
+**Future projects** will integrate $PITLAB as the universal utility token for the ecosystem.
+
+**Mission:** Support open hardware, DIY security, and grassroots developers through transparent, community-led development.
 
 ## Acknowledgements
 

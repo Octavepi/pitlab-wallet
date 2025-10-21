@@ -162,19 +162,24 @@ lcd-show-fork/usr/tft35a-overlay.dtb
 ./build.sh pi4 mydisplay 90
 ```
 
-## LCD-show Fork Integration
+## LCD-show Fork (No Longer Required)
 
-The lcd-show repository is OPTIONAL and only used to copy overlays/calibration when present.
+**The lcd-show repository is NO LONGER NEEDED.** All LCD driver logic has been integrated into pitlab-wallet:
 
-If available, place it alongside this repo as `../lcd-show-fork` (default autodetect), or set `PITLAB_LCD_SHOW_DIR` to your path.
+- **Display database**: `br2-external/board/common/lcd-drivers.sh` contains all display configurations
+- **Device tree overlays**: Uses Raspberry Pi firmware overlays (already included in rpi-firmware package)
+- **FBCP**: Built directly by Buildroot via the `BR2_PACKAGE_RPI_FBCP` package
+- **Touch calibration**: Uses libinput defaults (works for most displays)
 
-When absent, the build uses firmware-provided overlays where available and standard libinput defaults for touch.
+The original goodtft/LCD-show repository was used as a reference during integration but is no longer required for building or running pitlab-wallet.
 
-### Optional Files from lcd-show-fork (if present)
+### If You Still Want lcd-show (Optional)
 
-- **Device Tree Overlays**: `usr/*.dtb`, `usr/*.dtbo`
-- **Calibration Files**: `usr/99-calibration.conf-*`
-- **FBCP Binary**: `usr/rpi-fbcp/` (optional; you can also build rpi-fbcp in Buildroot)
+Only needed if you have custom overlays or calibration files not in firmware:
+
+- Place it at `../lcd-show-fork` or set `PITLAB_LCD_SHOW_DIR`
+- Build will attempt to copy custom overlays/calibration if found
+- Otherwise, uses built-in firmware overlays and defaults
 
 ## Troubleshooting
 

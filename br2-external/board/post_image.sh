@@ -219,6 +219,7 @@ if command -v needs_fbcp &> /dev/null && needs_fbcp "$DISPLAY"; then
     echo "Configuring FBCP for SPI display $DISPLAY..."
     
     # Create rc.local for FBCP startup
+    # FBCP is built by Buildroot (BR2_PACKAGE_RPI_FBCP) and installed to /usr/local/bin/fbcp
     RC_LOCAL_FILE="$IMAGES_DIR/firmware/rc.local"
     cat > "$RC_LOCAL_FILE" << 'EORC'
 #!/bin/sh -e
@@ -229,33 +230,13 @@ if command -v needs_fbcp &> /dev/null && needs_fbcp "$DISPLAY"; then
 # Start framebuffer copy for SPI display
 if [ -x /usr/local/bin/fbcp ]; then
     /usr/local/bin/fbcp &
-elif [ -x /boot/fbcp/fbcp ]; then
-    /boot/fbcp/fbcp &
 fi
 
 exit 0
 EORC
     chmod +x "$RC_LOCAL_FILE"
     echo "  ✓ Created rc.local with FBCP startup"
-    
-    # Copy FBCP binary from lcd-show if available
-    if [ -n "$LCD_SHOW_DIR" ]; then
-        if [ -f "$LCD_SHOW_DIR/usr/rpi-fbcp/fbcp" ]; then
-            mkdir -p "$IMAGES_DIR/firmware/fbcp"
-            cp "$LCD_SHOW_DIR/usr/rpi-fbcp/fbcp" "$IMAGES_DIR/firmware/fbcp/"
-            echo "  ✓ Copied FBCP binary from lcd-show (rpi-fbcp)"
-        elif [ -f "$LCD_SHOW_DIR/usr/fbcp" ]; then
-            mkdir -p "$IMAGES_DIR/firmware/fbcp"
-            cp "$LCD_SHOW_DIR/usr/fbcp" "$IMAGES_DIR/firmware/fbcp/fbcp"
-            echo "  ✓ Copied FBCP binary from lcd-show (usr/fbcp)"
-        else
-            echo "  ⚠ Warning: FBCP binary not found in lcd-show, display may not work"
-            echo "  ⚠ FBCP is required for SPI displays to function properly"
-        fi
-    else
-        echo "  ⚠ Warning: LCD_SHOW_DIR not set; cannot copy FBCP binary"
-        echo "  ⚠ FBCP is required for SPI displays to function properly"
-    fi
+    echo "  ℹ FBCP will be built by Buildroot (BR2_PACKAGE_RPI_FBCP)"
 else
     echo "Display $DISPLAY does not require FBCP (HDMI or direct display)"
 fi

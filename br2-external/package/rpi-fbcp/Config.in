@@ -1,0 +1,14 @@
+config BR2_PACKAGE_RPI_FBCP
+	bool "rpi-fbcp"
+	depends on BR2_PACKAGE_RPI_USERLAND
+	help
+	  Raspberry Pi Framebuffer Copy utility for copying the primary
+	  framebuffer to a secondary framebuffer device (e.g., SPI displays).
+
+	  This is useful for displaying the main framebuffer output on
+	  small SPI/GPIO-connected displays.
+
+	  https://github.com/tasanakorn/rpi-fbcp
+
+comment "rpi-fbcp needs rpi-userland"
+	depends on !BR2_PACKAGE_RPI_USERLAND

@@ -48,8 +48,8 @@ Usage: $0 [OPTIONS]
 Positional usage:
     $0 [BOARD] [DISPLAY] [ROTATION] [FLAGS]
         BOARD    : pi3 | pi4 | pi5 (default: pi4)
-        DISPLAY  : display overlay name (default: waveshare35a)
-        ROTATION : 0 | 90 | 180 | 270 (default: 180)
+        DISPLAY  : LCD driver name from LCD-show (default: lcd35)
+        ROTATION : 0 | 90 | 180 | 270 (default: 90)
         FLAGS    : -c | --clean | -dc | --distclean
 
 Options:
@@ -76,10 +76,10 @@ Examples:
     $0 pi5 hdmi 0 -c
     $0 pi4 lcd35 180 -dc
     
-    # Long options (still supported)
-    $0 --board pi4 --display waveshare35a --rotation 90
+    # Long options
+    $0 --board pi4 --display lcd35 --rotation 90
     $0 --board pi5 --display hdmi --rotation 0
-    $0 --board pi3 --display ili9341 --rotation 270
+    $0 --board pi3 --display lcd7b --rotation 0
 
 The build process will:
 1. Install host dependencies
@@ -238,12 +238,7 @@ configure_buildroot() {
     # Use our custom defconfig from BR2_EXTERNAL
     make pitlab-wallet-${BOARD}_defconfig BR2_EXTERNAL=../br2-external O="${BR_OUTPUT_DIR}"
     
-    # Set display configuration as environment variables for post-image.sh
-    export PITLAB_DISPLAY="$DISPLAY"
-    export PITLAB_ROTATION="$ROTATION"
-    export PITLAB_LCD_SHOW_DIR="$LCD_SHOW_PATH"
-    
-    log_info "Display configuration: $DISPLAY @ ${ROTATION}°"
+    log_info "Display configuration: $DISPLAY @ $ROTATION° (LCD-show integration)"
     
     cd ..
 }
@@ -286,10 +281,15 @@ build_system() {
     
     cd buildroot
     
-    # Export environment variables for post-build scripts
+    # Export environment variables for post-build and post-image scripts
+    # Use both old and new variable names for compatibility
     export PITLAB_WALLET_BOARD=$BOARD
     export PITLAB_WALLET_DISPLAY=$DISPLAY
     export PITLAB_WALLET_ROTATION=$ROTATION
+    # New LCD-show integration variables
+    export PITLAB_DISPLAY=$DISPLAY
+    export PITLAB_ROTATION=$ROTATION
+    export PITLAB_LCD_SHOW_DIR=$LCD_SHOW_PATH
     
     # Optimize downloads with faster primary sites
     export BR2_PRIMARY_SITE="https://mirror.cedia.org.ec"
@@ -329,6 +329,7 @@ cleanup() {
     log_step "Cleaning up..."
     unset CGO_ENABLED GOOS GOARCH GOARM CC
     unset PITLAB_WALLET_BOARD PITLAB_WALLET_DISPLAY PITLAB_WALLET_ROTATION
+    unset PITLAB_DISPLAY PITLAB_ROTATION PITLAB_LCD_SHOW_DIR
 }
 
 # Main execution

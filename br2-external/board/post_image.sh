@@ -190,53 +190,55 @@ EOF
         fi
     fi
 else
-    # Fallback for unknown displays - use old logic
-    CANDIDATES=()
-    case "$DISPLAY" in
-        jun-electron*|jun-electron-35*|jun-electron-3.5* )
-            CANDIDATES=(tinylcd35 pitft35-resistive fbtft)
-            ;;
-        waveshare35a|waveshare35b)
-            CANDIDATES=(tinylcd35 pitft35-resistive fbtft)
-            ;;
-        pitft35-resistive|tinylcd35|rpi-display)
-            CANDIDATES=("$DISPLAY")
-            ;;
-        *)
-            CANDIDATES=("$DISPLAY" tinylcd35 pitft35-resistive fbtft)
-            ;;
-    esac
-
-    # Pick first available overlay from candidates
-    for ov in "${CANDIDATES[@]}"; do
-        if [ -f "$IMAGES_DIR/overlays/${ov}.dtbo" ]; then
-            SELECTED_OVERLAY="$ov"
-            break
-        fi
-    done
-
-    if [ -z "$SELECTED_OVERLAY" ]; then
-        echo "WARNING: No matching overlay found for '$DISPLAY'. Available overlays include:" >&2
-        ls -1 "$IMAGES_DIR/overlays" 2>/dev/null | head -50 | sed 's/^/  - /' >&2 || true
-        SELECTED_OVERLAY="$DISPLAY"
-    fi
-
-    # Configure overlay parameters based on display type
-    if [ "$SELECTED_OVERLAY" = "fbtft" ]; then
-        cat >> "$IMAGES_DIR/firmware/config.txt" << EOF
-# SPI Display Configuration: $DISPLAY (using fbtft with ILI9486)
-dtoverlay=fbtft,spi0-0,ili9486,rotate=$ROTATION,speed=32000000,fps=60,width=320,height=480,bgr=1
+    # Display not in database - warn and use basic configuration
+    echo "WARNING: Display '$DISPLAY' not found in LCD driver database" >&2
+    echo "WARNING: Using basic overlay configuration (may not work)" >&2
+    echo "WARNING: Run './build.sh --list-displays' to see supported displays" >&2
+    
+    SELECTED_OVERLAY="$DISPLAY"
+    
+    # Try basic overlay configuration
+    cat >> "$IMAGES_DIR/firmware/config.txt" << EOF
+# Display Configuration: $DISPLAY (not in database, using basic config)
+dtoverlay=$DISPLAY,rotate=$ROTATION
 framebuffer_width=480
 framebuffer_height=320
 EOF
+fi
+
+# Configure FBCP (Framebuffer Copy) for SPI displays
+if command -v needs_fbcp &> /dev/null && needs_fbcp "$DISPLAY"; then
+    echo "Configuring FBCP for SPI display $DISPLAY..."
+    
+    # Create rc.local for FBCP startup
+    RC_LOCAL_FILE="$IMAGES_DIR/firmware/rc.local"
+    cat > "$RC_LOCAL_FILE" << 'EORC'
+#!/bin/sh -e
+#
+# rc.local - PITLAB Wallet startup script
+# This script is executed at the end of each multiuser runlevel.
+
+# Start framebuffer copy for SPI display
+if [ -x /usr/local/bin/fbcp ]; then
+    /usr/local/bin/fbcp &
+fi
+
+exit 0
+EORC
+    chmod +x "$RC_LOCAL_FILE"
+    echo "  ✓ Created rc.local with FBCP startup"
+    
+    # Copy FBCP binary from lcd-show if available
+    if [ -n "$LCD_SHOW_DIR" ] && [ -f "$LCD_SHOW_DIR/usr/rpi-fbcp/fbcp" ]; then
+        mkdir -p "$IMAGES_DIR/firmware/fbcp"
+        cp "$LCD_SHOW_DIR/usr/rpi-fbcp/fbcp" "$IMAGES_DIR/firmware/fbcp/"
+        echo "  ✓ Copied FBCP binary from lcd-show"
     else
-        cat >> "$IMAGES_DIR/firmware/config.txt" << EOF
-# SPI Display Configuration: $DISPLAY
-dtoverlay=$SELECTED_OVERLAY,rotate=$ROTATION,speed=32000000,fps=60
-framebuffer_width=480
-framebuffer_height=320
-EOF
+        echo "  ⚠ Warning: FBCP binary not found in lcd-show, display may not work"
+        echo "  ⚠ FBCP is required for SPI displays to function properly"
     fi
+else
+    echo "Display $DISPLAY does not require FBCP (HDMI or direct display)"
 fi
 
 echo "Generating SD card image with genimage..."

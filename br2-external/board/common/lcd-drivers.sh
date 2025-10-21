@@ -79,6 +79,24 @@ parse_display_config() {
     esac
 }
 
+# Check if display needs FBCP (framebuffer copy for SPI displays)
+needs_fbcp() {
+    local display="$1"
+    local config=$(get_display_config "$display")
+    local script=$(parse_display_config "$config" "script")
+    
+    # SPI/GPIO displays need FBCP (LCD35, LCD32, MHS series, etc.)
+    # HDMI displays and those without overlay don't need FBCP
+    case "$script" in
+        LCD35-show|LCD32-show|LCD28-show|LCD24-show|MHS35-show|MHS32-show|MHS24-show|MPI3508-show)
+            return 0  # Needs FBCP
+            ;;
+        *)
+            return 1  # Doesn't need FBCP
+            ;;
+    esac
+}
+
 # List all supported displays
 list_displays() {
     echo "Supported LCD Displays:"
@@ -94,4 +112,5 @@ list_displays() {
 # Export functions and variables for sourcing
 export -f get_display_config
 export -f parse_display_config
+export -f needs_fbcp
 export -f list_displays

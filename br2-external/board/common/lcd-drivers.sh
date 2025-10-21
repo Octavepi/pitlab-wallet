@@ -1,13 +1,13 @@
 #!/bin/bash
 # LCD Display Driver Database for PITLAB Wallet
-# Maps display names to their LCD-show script configurations
+# Maps display names to their configurations
 
 # Display configuration format:
 # DISPLAY_NAME: script_name:overlay_file:default_rotation:width:height:touch_type:config_params
 
 declare -A LCD_DRIVERS
 
-# GPIO/SPI-based displays (from goodtft/LCD-show)
+# GPIO/SPI-based displays
 LCD_DRIVERS[lcd35]="LCD35-show:tft35a:90:480:320:resistance:hdmi_cvt=480x320"
 LCD_DRIVERS[lcd32]="LCD32-show:tft9341:270:480:360:resistance:hdmi_cvt=480x360"
 LCD_DRIVERS[lcd28]="LCD28-show:tft9341:270:480:360:resistance:hdmi_cvt=480x360"

@@ -1,6 +1,6 @@
 # LCD Display Driver Integration for PITLAB Wallet
 
-This directory contains the LCD driver integration system that allows PITLAB wallet to support various TFT LCD displays from the goodtft/LCD-show repository.
+This directory contains the LCD driver integration system that allows PITLAB wallet to support various TFT LCD displays.
 
 ## Architecture
 
@@ -162,24 +162,16 @@ lcd-show-fork/usr/tft35a-overlay.dtb
 ./build.sh pi4 mydisplay 90
 ```
 
-## LCD-show Fork (No Longer Required)
+## LCD-show Reference (No Longer Required)
 
-**The lcd-show repository is NO LONGER NEEDED.** All LCD driver logic has been integrated into pitlab-wallet:
+**The lcd-show repository is NO LONGER NEEDED for building pitlab-wallet.** All LCD driver logic has been fully integrated:
 
 - **Display database**: `br2-external/board/common/lcd-drivers.sh` contains all display configurations
-- **Device tree overlays**: Uses Raspberry Pi firmware overlays (already included in rpi-firmware package)
+- **Device tree overlays**: Uses Raspberry Pi firmware overlays (included in rpi-firmware package)
 - **FBCP**: Built directly by Buildroot via the `BR2_PACKAGE_RPI_FBCP` package
 - **Touch calibration**: Uses libinput defaults (works for most displays)
 
 The original goodtft/LCD-show repository was used as a reference during integration but is no longer required for building or running pitlab-wallet.
-
-### If You Still Want lcd-show (Optional)
-
-Only needed if you have custom overlays or calibration files not in firmware:
-
-- Place it at `../lcd-show-fork` or set `PITLAB_LCD_SHOW_DIR`
-- Build will attempt to copy custom overlays/calibration if found
-- Otherwise, uses built-in firmware overlays and defaults
 
 ## Troubleshooting
 
@@ -190,29 +182,18 @@ Only needed if you have custom overlays or calibration files not in firmware:
    ./build.sh --list-displays
    ```
 
-2. **Verify lcd-show-fork location**:
-   ```bash
-   ls ../lcd-show-fork/
-   ```
-
-3. **Check boot config**:
+2. **Check boot config**:
    Mount SD card and examine `/boot/config.txt`
 
-4. **Review display info**:
+3. **Review display info**:
    On running system: `cat /etc/pitlab-display.conf`
 
 ### Touchscreen Not Calibrated
 
-1. Check calibration file exists:
-   ```bash
-   cat /etc/X11/xorg.conf.d/99-calibration.conf
-   ```
-
-2. Manually test with `xinput_calibrator` (if X11 available)
-
-3. Add custom calibration:
-   - Edit `lcd-drivers.sh`
-   - Add calibration file to lcd-show-fork
+Touchscreen uses libinput defaults. For custom calibration:
+1. Install xinput_calibrator on the device
+2. Run calibration and save values
+3. Add to custom xorg.conf file
 
 ### SPI Display Shows Nothing
 
@@ -286,7 +267,6 @@ Build system uses these variables:
 |----------|--------|---------|
 | `PITLAB_DISPLAY` | build.sh | post-image.sh |
 | `PITLAB_ROTATION` | build.sh | post-image.sh |
-| `PITLAB_LCD_SHOW_DIR` | build.sh | post-image.sh |
 
 ## References
 

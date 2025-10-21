@@ -11,7 +11,6 @@ DISPLAY="lcd35"
 ROTATION="90"
 CLEAN=0
 DISTCLEAN=0
-LCD_SHOW_PATH=""  # Optional: set if you have custom overlays/calibration
 # Note: Toolchain and kernel defconfigs are handled by Buildroot defconfigs.
 
 # Colors for output
@@ -48,7 +47,7 @@ Usage: $0 [OPTIONS]
 Positional usage:
     $0 [BOARD] [DISPLAY] [ROTATION] [FLAGS]
         BOARD    : pi3 | pi4 | pi5 (default: pi4)
-        DISPLAY  : LCD driver name from LCD-show (default: lcd35)
+        DISPLAY  : LCD driver name (default: lcd35)
         ROTATION : 0 | 90 | 180 | 270 (default: 90)
         FLAGS    : -c | --clean | -dc | --distclean
 
@@ -162,14 +161,6 @@ esac
 
 log_info "Building PitLab Wallet for $BOARD with $DISPLAY display (rotation: $ROTATION°)"
 
-# Optional: LCD-show directory (for copying overlays/calibration if available)
-if [[ -z "$LCD_SHOW_PATH" ]] || [[ ! -d "$LCD_SHOW_PATH" ]]; then
-    log_info "LCD-show repo not found (optional). We'll use built-in overlays where possible."
-    log_info "If you use SPI displays like lcd35 and need tft35a overlay/calibration, place lcd-show at: $(dirname "${BASH_SOURCE[0]}")/../lcd-show-fork"
-else
-    log_info "Found LCD-show at: $LCD_SHOW_PATH (will copy overlays/calibration if needed)"
-fi
-
 # Derive per-config Buildroot output directory (relative to buildroot/)
 OUTPUT_SUFFIX="${BOARD}_${DISPLAY}_${ROTATION}"
 BR_OUTPUT_DIR="output/${OUTPUT_SUFFIX}"
@@ -239,7 +230,7 @@ configure_buildroot() {
     # Use our custom defconfig from BR2_EXTERNAL
     make pitlab-wallet-${BOARD}_defconfig BR2_EXTERNAL=../br2-external O="${BR_OUTPUT_DIR}"
     
-    log_info "Display configuration: $DISPLAY @ $ROTATION° (LCD-show integration)"
+    log_info "Display configuration: $DISPLAY @ $ROTATION°"
     
     cd ..
 }
@@ -283,14 +274,11 @@ build_system() {
     cd buildroot
     
     # Export environment variables for post-build and post-image scripts
-    # Use both old and new variable names for compatibility
     export PITLAB_WALLET_BOARD=$BOARD
     export PITLAB_WALLET_DISPLAY=$DISPLAY
     export PITLAB_WALLET_ROTATION=$ROTATION
-    # New LCD-show integration variables
     export PITLAB_DISPLAY=$DISPLAY
     export PITLAB_ROTATION=$ROTATION
-    export PITLAB_LCD_SHOW_DIR=$LCD_SHOW_PATH
     
     # Optimize downloads with faster primary sites
     export BR2_PRIMARY_SITE="https://mirror.cedia.org.ec"
@@ -330,7 +318,7 @@ cleanup() {
     log_step "Cleaning up..."
     unset CGO_ENABLED GOOS GOARCH GOARM CC
     unset PITLAB_WALLET_BOARD PITLAB_WALLET_DISPLAY PITLAB_WALLET_ROTATION
-    unset PITLAB_DISPLAY PITLAB_ROTATION PITLAB_LCD_SHOW_DIR
+    unset PITLAB_DISPLAY PITLAB_ROTATION
 }
 
 # Main execution

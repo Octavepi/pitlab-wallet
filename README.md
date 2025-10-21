@@ -3,11 +3,28 @@
 [![Build Status](https://github.com/Octavepi/pitlab-wallet/actions/workflows/build.yml/badge.svg)](https://github.com/Octavepi/pitlab-wallet/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-# PitLab Wallet
+> **Tagline:** *Sweat-secured. ARM-powered. Built in the PIT.*
 
 **An air-gapped hardware wallet appliance for Raspberry Pi**
 
 PitLab Wallet is a security-focused, air-gapped cryptocurrency hardware wallet built on Raspberry Pi, running Trezor Core (emulator) and trezord-go bridge on a minimal Buildroot-based operating system.
+
+## The PITLAB Ecosystem
+
+This repository is part of a three-component ecosystem:
+
+1. **[pitlab-meme](https://github.com/Octavepi/pitlab-meme)** - Token contracts and deployment
+   - ERC-20 token ($PITLAB / ARMPIT) on Base chain
+   - Supports development of this hardware wallet
+2. **[pitlab-wallet](https://github.com/Octavepi/pitlab-wallet)** (THIS REPO) - Raspberry Pi hardware wallet
+   - Trezor-compatible open-source hardware
+   - DIY-friendly build process
+3. **[pitlab-website](https://github.com/Octavepi/pitlab-website)** - Official website and docs
+   - Whitepaper and documentation
+   - Build guides and tutorials
+
+**Mission:** Support open hardware, DIY security, and grassroots developers through transparent, community-led development. The $PITLAB token exists to reward and fund development of this open-source hardware wallet.
+
 ## Acknowledgements
 
 This project makes use of the following third-party sources, libraries, and upstream projects:
@@ -27,6 +44,7 @@ If you fork, redistribute, or create derivative works from PitLab Wallet, you MU
 - **USB-Only Communication**: Connect only to Trezor Suite via USB
 - **Reproducible Builds**: Deterministic build process for verification
 - **Passphrase/Passcode Key Storage Protection**: Trezor emulator supports passphrase (or PIN) protection for wallet keys. This **must** be enabled—otherwise, anyone with access to your SD card can recover your keys. Always use a strong passphrase or PIN for maximum security.
+- **ERC-20 Compatible**: Securely store $PITLAB and other ERC-20 tokens on Base chain
 
 ## 🎯 Supported Hardware
 

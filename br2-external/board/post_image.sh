@@ -10,8 +10,17 @@ BR2_EXTERNAL_PATH="$2"
 
 # Get environment variables set by build script
 BOARD="${PITLAB_WALLET_BOARD:-pi4}"
-DISPLAY="${PITLAB_WALLET_DISPLAY:-waveshare35a}"
-ROTATION="${PITLAB_WALLET_ROTATION:-180}"
+DISPLAY="${PITLAB_DISPLAY:-${PITLAB_WALLET_DISPLAY:-lcd35}}"
+ROTATION="${PITLAB_ROTATION:-${PITLAB_WALLET_ROTATION:-90}}"
+LCD_SHOW_DIR="${PITLAB_LCD_SHOW_DIR:-}"
+
+# Source the LCD driver database
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/common/lcd-drivers.sh" ]; then
+    source "$SCRIPT_DIR/common/lcd-drivers.sh"
+else
+    echo "WARNING: lcd-drivers.sh not found. Display configuration may be limited."
+fi
 
 echo "PitLab Wallet post-image script running..."
 echo "Images directory: $IMAGES_DIR"
@@ -108,9 +117,16 @@ cat > "$IMAGES_DIR/firmware/cmdline.txt" << 'EOF'
 console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait quiet logo.nologo modules_load=dwc2,g_ether fbcon=map:1
 EOF
 
-# Configure display-specific settings
+# Configure display-specific settings using LCD driver database
 echo "" >> "$IMAGES_DIR/firmware/config.txt"
 echo "# Display configuration for $DISPLAY" >> "$IMAGES_DIR/firmware/config.txt"
+
+# Try to get display config from database
+DISPLAY_INFO=""
+SELECTED_OVERLAY=""
+if command -v get_display_config &> /dev/null; then
+    DISPLAY_INFO=$(get_display_config "$DISPLAY")
+fi
 
 if [ "$DISPLAY" = "hdmi" ]; then
     cat >> "$IMAGES_DIR/firmware/config.txt" << EOF
@@ -123,14 +139,61 @@ hdmi_group=2
 hdmi_mode=87
 hdmi_cvt=800 480 60 6 0 0 0
 EOF
+    SELECTED_OVERLAY="hdmi"
+elif [ -n "$DISPLAY_INFO" ]; then
+    # Parse display configuration from database
+    local overlay="" width="" height="" touch="" params=""
+    if command -v parse_display_config &> /dev/null; then
+        eval $(parse_display_config "$DISPLAY_INFO")
+    fi
+    
+    # Copy device tree overlay from lcd-show if available
+    if [ -n "$LCD_SHOW_DIR" ] && [ -n "$overlay" ]; then
+        if [ -f "$LCD_SHOW_DIR/usr/${overlay}-overlay.dtb" ]; then
+            mkdir -p "$IMAGES_DIR/overlays"
+            cp "$LCD_SHOW_DIR/usr/${overlay}-overlay.dtb" "$IMAGES_DIR/overlays/${overlay}.dtbo"
+            echo "Copied overlay: ${overlay}-overlay.dtb"
+        fi
+    fi
+    
+    SELECTED_OVERLAY="$overlay"
+    
+    # Configure based on display properties
+    if [ -n "$overlay" ] && [ "$overlay" != "none" ]; then
+        cat >> "$IMAGES_DIR/firmware/config.txt" << EOF
+# SPI Display Configuration: $DISPLAY (from lcd-drivers database)
+dtoverlay=$overlay,rotate=$ROTATION
+EOF
+        if [ -n "$width" ] && [ -n "$height" ]; then
+            cat >> "$IMAGES_DIR/firmware/config.txt" << EOF
+hdmi_cvt=$width $height 60 6 0 0 0
+hdmi_group=2
+hdmi_mode=87
+framebuffer_width=$width
+framebuffer_height=$height
+EOF
+        fi
+        
+        # Add extra parameters if specified
+        if [ -n "$params" ]; then
+            echo "$params" >> "$IMAGES_DIR/firmware/config.txt"
+        fi
+    fi
+    
+    # Configure touchscreen calibration if needed
+    if [ -n "$touch" ] && [ "$touch" != "none" ] && [ -n "$LCD_SHOW_DIR" ]; then
+        mkdir -p "$IMAGES_DIR/firmware/xorg.conf.d"
+        CALIB_FILE="$LCD_SHOW_DIR/usr/99-calibration.conf-${DISPLAY#lcd}-$ROTATION"
+        if [ -f "$CALIB_FILE" ]; then
+            cp "$CALIB_FILE" "$IMAGES_DIR/firmware/xorg.conf.d/99-calibration.conf"
+            echo "Copied touch calibration: $(basename "$CALIB_FILE")"
+        fi
+    fi
 else
-    # For all other displays, choose an appropriate overlay
-    # Map known vendor names to firmware overlay candidates
+    # Fallback for unknown displays - use old logic
     CANDIDATES=()
     case "$DISPLAY" in
         jun-electron*|jun-electron-35*|jun-electron-3.5* )
-            # Jun-Electron 3.5" uses ILI9486 + XPT2046
-            # Use fbtft overlay with ILI9486 driver for better compatibility
             CANDIDATES=(tinylcd35 pitft35-resistive fbtft)
             ;;
         waveshare35a|waveshare35b)
@@ -140,13 +203,11 @@ else
             CANDIDATES=("$DISPLAY")
             ;;
         *)
-            # Fallbacks for unknown names
             CANDIDATES=("$DISPLAY" tinylcd35 pitft35-resistive fbtft)
             ;;
     esac
 
     # Pick first available overlay from candidates
-    SELECTED_OVERLAY=""
     for ov in "${CANDIDATES[@]}"; do
         if [ -f "$IMAGES_DIR/overlays/${ov}.dtbo" ]; then
             SELECTED_OVERLAY="$ov"
@@ -157,26 +218,21 @@ else
     if [ -z "$SELECTED_OVERLAY" ]; then
         echo "WARNING: No matching overlay found for '$DISPLAY'. Available overlays include:" >&2
         ls -1 "$IMAGES_DIR/overlays" 2>/dev/null | head -50 | sed 's/^/  - /' >&2 || true
-        # Still write the requested name; firmware will ignore if missing.
         SELECTED_OVERLAY="$DISPLAY"
     fi
 
     # Configure overlay parameters based on display type
     if [ "$SELECTED_OVERLAY" = "fbtft" ]; then
-        # Generic fbtft overlay for ILI9486-based displays
         cat >> "$IMAGES_DIR/firmware/config.txt" << EOF
 # SPI Display Configuration: $DISPLAY (using fbtft with ILI9486)
 dtoverlay=fbtft,spi0-0,ili9486,rotate=$ROTATION,speed=32000000,fps=60,width=320,height=480,bgr=1
-# Framebuffer resolution for 3.5" TFT
 framebuffer_width=480
 framebuffer_height=320
 EOF
     else
-        # Use standard overlay with parameters
         cat >> "$IMAGES_DIR/firmware/config.txt" << EOF
 # SPI Display Configuration: $DISPLAY
 dtoverlay=$SELECTED_OVERLAY,rotate=$ROTATION,speed=32000000,fps=60
-# Common 3.5" TFT resolution
 framebuffer_width=480
 framebuffer_height=320
 EOF

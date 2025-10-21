@@ -7,10 +7,11 @@ set -e
 
 # Default values
 BOARD="pi4"
-DISPLAY="waveshare35a"
-ROTATION="180"
+DISPLAY="lcd35"
+ROTATION="90"
 CLEAN=0
 DISTCLEAN=0
+LCD_SHOW_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")/../lcd-show-fork" && pwd 2>/dev/null || echo "")"
 # Note: Toolchain and kernel defconfigs are handled by Buildroot defconfigs.
 
 # Colors for output
@@ -53,21 +54,27 @@ Positional usage:
 
 Options:
     --board <pi3|pi4|pi5>                 Target Raspberry Pi board (default: pi4)
-    --display <display_name>              Display overlay name (default: waveshare35a)
-    --rotation <0|90|180|270>            Display rotation angle (default: 180)
+    --display <display_name>              Display driver name (default: lcd35)
+    --rotation <0|90|180|270>            Display rotation angle (default: 90)
     --clean|-c                           Wipe Buildroot output and rebuild from scratch
     --distclean|-dc                      Remove Buildroot download cache (dl) as well; implies --clean
+    --list-displays                      List all supported LCD displays
     --help                               Show this help message
 
 Supported displays:
-    waveshare35a, waveshare32b, hdmi, vc4-kms-v3d, ili9341, ili9486, st7735r, and more
-    Note: All Raspberry Pi firmware overlays are supported dynamically
+    lcd35 (3.5" GPIO/SPI) - Jun-Electron 3.5" compatible
+    lcd32, lcd28, lcd24 (2.4-3.2" GPIO/SPI displays)
+    lcd5, lcd7b, lcd7c (5-7" HDMI displays)
+    mhs35, mhs32, mhs24 (MHS series)
+    hdmi (standard HDMI output)
+    
+    Run: ./build.sh --list-displays for full list
 
 Examples:
     # Positional
-    $0 pi4 waveshare35a 90
+    $0 pi4 lcd35 90
     $0 pi5 hdmi 0 -c
-    $0 pi4 waveshare35a 180 -dc
+    $0 pi4 lcd35 180 -dc
     
     # Long options (still supported)
     $0 --board pi4 --display waveshare35a --rotation 90
@@ -100,6 +107,10 @@ while [[ $# -gt 0 ]]; do
             CLEAN=1; shift 1 ;;
         --distclean|-dc)
             DISTCLEAN=1; CLEAN=1; shift 1 ;;
+        --list-displays)
+            source br2-external/board/common/lcd-drivers.sh
+            list_displays
+            exit 0 ;;
         --help|-h)
             show_help; exit 0 ;;
         # Positional args
@@ -150,6 +161,13 @@ case $ROTATION in
 esac
 
 log_info "Building PitLab Wallet for $BOARD with $DISPLAY display (rotation: $ROTATION°)"
+
+# Verify LCD-show directory exists
+if [[ -z "$LCD_SHOW_PATH" ]] || [[ ! -d "$LCD_SHOW_PATH" ]]; then
+    log_warn "LCD-show directory not found at: $LCD_SHOW_PATH"
+    log_warn "Display drivers may not be fully configured"
+    log_warn "Clone lcd-show-fork to: $(dirname "${BASH_SOURCE[0]}")/../lcd-show-fork"
+fi
 
 # Derive per-config Buildroot output directory (relative to buildroot/)
 OUTPUT_SUFFIX="${BOARD}_${DISPLAY}_${ROTATION}"
@@ -220,11 +238,12 @@ configure_buildroot() {
     # Use our custom defconfig from BR2_EXTERNAL
     make pitlab-wallet-${BOARD}_defconfig BR2_EXTERNAL=../br2-external O="${BR_OUTPUT_DIR}"
     
-    # Enable additional packages if needed
-    if [[ $DISPLAY == "hdmi" ]]; then
-        log_info "Configuring for HDMI display..."
-        # HDMI configuration is handled in post_image.sh
-    fi
+    # Set display configuration as environment variables for post-image.sh
+    export PITLAB_DISPLAY="$DISPLAY"
+    export PITLAB_ROTATION="$ROTATION"
+    export PITLAB_LCD_SHOW_DIR="$LCD_SHOW_PATH"
+    
+    log_info "Display configuration: $DISPLAY @ ${ROTATION}°"
     
     cd ..
 }

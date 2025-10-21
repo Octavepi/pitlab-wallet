@@ -11,7 +11,7 @@ DISPLAY="lcd35"
 ROTATION="90"
 CLEAN=0
 DISTCLEAN=0
-LCD_SHOW_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")/../lcd-show-fork" && pwd 2>/dev/null || echo "")"
+LCD_SHOW_PATH=""  # Optional: set if you have custom overlays/calibration
 # Note: Toolchain and kernel defconfigs are handled by Buildroot defconfigs.
 
 # Colors for output

@@ -29,6 +29,19 @@ This repository is part of the **PITLAB** ecosystem — a collection of open-sou
 
 **This wallet is completely FREE** — no fees, no subscriptions, no hidden costs. Development is funded by pitlab-eltmm revenue and the $PITLAB ecosystem. We believe in open hardware, DIY security, and giving back to the crypto community that made this all possible.
 
+## 📚 Ecosystem Documentation
+
+**All canonical cross-repository documentation is maintained in [pitlab-ecosystem](https://github.com/Octavepi/pitlab-ecosystem):**
+
+- [Cross-Repo Alignment Guide](../pitlab-ecosystem/docs/CROSS_REPO_ALIGNMENT.md) - How to keep all repos synchronized
+- [Infrastructure Documentation](../pitlab-ecosystem/docs/INFRASTRUCTURE.md) - Complete payment system architecture
+- [Quick Start Guide](../pitlab-ecosystem/docs/QUICK_START.md) - User onboarding walkthrough
+- [Dependencies Status](../pitlab-ecosystem/docs/DEPENDENCIES_STATUS.md) - All project dependencies
+- [Security Audit](../pitlab-ecosystem/docs/security/SECURITY_AUDIT.md) - Comprehensive security review
+- [Security Fixes](../pitlab-ecosystem/docs/security/SECURITY_FIXES.md) - Summary of applied fixes
+
+A local clone is available at `../pitlab-ecosystem` in the workspace.
+
 ## Acknowledgements
 
 This project makes use of the following third-party sources, libraries, and upstream projects:

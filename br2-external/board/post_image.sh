@@ -44,24 +44,30 @@ fi
 # Copy kernel Image and DTB files from kernel build to images root
 # Kernel build places them in arch/arm64/boot/ or arch/arm/boot/
 LINUX_BUILD_DIR="${IMAGES_DIR}/../build/linux-custom"
+
+# Track whether the built kernel is 64-bit (1) or 32-bit (0)
+ARM64_MODE=0
+
 if [ -d "$LINUX_BUILD_DIR" ]; then
-    # Copy kernel Image
-    for img_path in "$LINUX_BUILD_DIR/arch/arm64/boot/Image" "$LINUX_BUILD_DIR/arch/arm/boot/zImage"; do
-        if [ -f "$img_path" ]; then
-            echo "Copying kernel Image from $img_path to $IMAGES_DIR/Image"
-            cp -f "$img_path" "$IMAGES_DIR/Image" 2>/dev/null || true
-            break
-        fi
-    done
-    
+    # Copy kernel Image (prefer 64-bit Image if present; otherwise 32-bit zImage)
+    if [ -f "$LINUX_BUILD_DIR/arch/arm64/boot/Image" ]; then
+        echo "Copying 64-bit kernel Image to $IMAGES_DIR/Image"
+        cp -f "$LINUX_BUILD_DIR/arch/arm64/boot/Image" "$IMAGES_DIR/Image" 2>/dev/null || true
+        ARM64_MODE=1
+    elif [ -f "$LINUX_BUILD_DIR/arch/arm/boot/zImage" ]; then
+        echo "Copying 32-bit kernel zImage to $IMAGES_DIR/Image"
+        cp -f "$LINUX_BUILD_DIR/arch/arm/boot/zImage" "$IMAGES_DIR/Image" 2>/dev/null || true
+        ARM64_MODE=0
+    fi
+
     # Copy DTB files
-    for dtb_dir in "$LINUX_BUILD_DIR/arch/arm64/boot/dts/broadcom" "$LINUX_BUILD_DIR/arch/arm/boot/dts/broadcom"; do
-        if [ -d "$dtb_dir" ]; then
-            echo "Copying DTBs from $dtb_dir to $IMAGES_DIR/"
-            cp -f "$dtb_dir"/bcm*.dtb "$IMAGES_DIR/" 2>/dev/null || true
-            break
-        fi
-    done
+    if [ "$ARM64_MODE" = "1" ] && [ -d "$LINUX_BUILD_DIR/arch/arm64/boot/dts/broadcom" ]; then
+        echo "Copying DTBs (arm64) to $IMAGES_DIR/"
+        cp -f "$LINUX_BUILD_DIR/arch/arm64/boot/dts/broadcom"/bcm*.dtb "$IMAGES_DIR/" 2>/dev/null || true
+    elif [ -d "$LINUX_BUILD_DIR/arch/arm/boot/dts/broadcom" ]; then
+        echo "Copying DTBs (arm) to $IMAGES_DIR/"
+        cp -f "$LINUX_BUILD_DIR/arch/arm/boot/dts/broadcom"/bcm*.dtb "$IMAGES_DIR/" 2>/dev/null || true
+    fi
 fi
 
 # Create firmware directory for boot config files
@@ -83,9 +89,9 @@ kernel=Image
 boot_delay=0
 disable_splash=1
 
-# Security settings
+# Security/CPU mode
 enable_gic=1
-arm_64bit=1
+arm_64bit=${ARM64_MODE}
 
 
 # Common display settings
@@ -336,6 +342,16 @@ if [ -f "$IMAGES_DIR/sdcard.img" ]; then
 else
     echo "❌ Failed to generate sdcard.img"
     exit 1
+fi
+
+# Copy final image to repository output/images for easy pickup
+REPO_ROOT="$(cd "${BR2_EXTERNAL_PATH}"/.. && pwd)"
+FINAL_OUT_DIR="$REPO_ROOT/output/images"
+mkdir -p "$FINAL_OUT_DIR"
+if cp -f "$IMAGES_DIR/sdcard.img" "$FINAL_OUT_DIR/"; then
+    echo "✅ Copied final image to: $FINAL_OUT_DIR/sdcard.img"
+else
+    echo "⚠️  Warning: Could not copy final image to $FINAL_OUT_DIR"
 fi
 
 # Write a BOOTINFO.txt to assist headless debugging

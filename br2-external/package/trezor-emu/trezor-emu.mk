@@ -9,14 +9,12 @@ TREZOR_EMU_SITE = $(call github,trezor,trezor-firmware,$(TREZOR_EMU_VERSION))
 TREZOR_EMU_LICENSE = LGPL-3.0
 TREZOR_EMU_LICENSE_FILES = COPYING
 
-TREZOR_EMU_DEPENDENCIES = python3 host-python3
+TREZOR_EMU_DEPENDENCIES = host-python3
 
 # Build the Core emulator only
 define TREZOR_EMU_BUILD_CMDS
 	cd $(@D)/core && \
-		ln -sf $(HOST_DIR)/bin/python3 $(HOST_DIR)/bin/python && \
-		PATH="$(HOST_DIR)/bin:$$PATH" \
-		PYTHON="$(HOST_DIR)/bin/python3" \
+		PYTHON="python3" \
 		make build_unix
 endef
 

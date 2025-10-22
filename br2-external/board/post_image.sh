@@ -141,7 +141,7 @@ EOF
     SELECTED_OVERLAY="hdmi"
 elif [ -n "$DISPLAY_INFO" ]; then
     # Parse display configuration from database
-    local overlay="" width="" height="" touch="" params=""
+    overlay="" width="" height="" touch="" params=""
     if command -v parse_display_config &> /dev/null; then
         eval $(parse_display_config "$DISPLAY_INFO")
     fi

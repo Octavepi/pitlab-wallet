@@ -1,0 +1,41 @@
+Fix CMake paths for Buildroot cross-compilation
+
+The original CMakeLists.txt hardcodes paths to /opt/vc which don't
+exist in a Buildroot environment. Update to use standard CMake paths
+that will be set correctly by the Buildroot toolchain.
+
+Also add missing vchostif library that's required for dispmanx functions.
+
+Signed-off-by: PitLab <pitlab@example.com>
+
+---
+ CMakeLists.txt | 15 ++++++---------
+ 1 file changed, 6 insertions(+), 9 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 1234567..abcdefg 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,14 +1,11 @@
+ cmake_minimum_required(VERSION 2.8)
+ 
+-SET(COMPILE_DEFINITIONS -Werror)
+-
+-include_directories(/opt/vc/include)
+-include_directories(/opt/vc/include/interface/vcos/pthreads)
+-include_directories(/opt/vc/include/interface/vmcs_host)
+-include_directories(/opt/vc/include/interface/vmcs_host/linux)
+-
+-link_directories(/opt/vc/lib)
++find_library(BCM_HOST_LIB bcm_host)
++find_library(VCHOSTIF_LIB vchostif)
++find_path(BCM_HOST_INCLUDE interface/vmcs_host/vc_dispmanx.h)
++include_directories(${BCM_HOST_INCLUDE})
+ 
+ add_executable(fbcp main.c)
+ 
+-target_link_libraries(fbcp bcm_host)
++target_link_libraries(fbcp ${BCM_HOST_LIB} ${VCHOSTIF_LIB} pthread)
++
+-- 
+2.34.1

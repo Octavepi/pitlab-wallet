@@ -9,12 +9,13 @@ TREZOR_EMU_SITE = $(call github,trezor,trezor-firmware,$(TREZOR_EMU_VERSION))
 TREZOR_EMU_LICENSE = LGPL-3.0
 TREZOR_EMU_LICENSE_FILES = COPYING
 
-TREZOR_EMU_DEPENDENCIES = host-python3 host-python-click host-python-protobuf
+TREZOR_EMU_DEPENDENCIES = host-python3 host-python-setuptools host-python-pip host-openssl
 
 # Pre-build steps to ensure layout parser is available
 define TREZOR_EMU_CONFIGURE_CMDS
 	cd $(@D)/core && \
-		PYTHONPATH=$(HOST_DIR)/lib/python$(HOST_PYTHON3_VERSION_MAJOR)/site-packages \
+		$(HOST_DIR)/bin/python3 -m pip install --no-deps --target=$(HOST_DIR)/lib/python3.11/site-packages click protobuf && \
+		PYTHONPATH=$(HOST_DIR)/lib/python3.11/site-packages \
 		$(HOST_DIR)/bin/python3 ./tools/make_utterances.py
 endef
 

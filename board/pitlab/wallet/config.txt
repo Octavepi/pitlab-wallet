@@ -1,0 +1,16 @@
+# Display configuration for LCD35
+dtparam=spi=on
+dtoverlay=tft35a
+dtparam=speed=32000000
+dtparam=rotation=90
+
+# Display timings
+hdmi_group=2
+hdmi_mode=87
+hdmi_cvt=480 320 60 6 0 0 0
+
+# SPI display requires FBCP
+dtoverlay=fbcp
+
+# Disable the PWR LED as a power saving measure
+dtparam=pwr_led_trigger=none

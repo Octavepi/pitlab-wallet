@@ -3,7 +3,7 @@
 # Start Trezor Core emulator
 #
 
-DAEMON=/usr/local/bin/trezor-emu
+DAEMON=/usr/bin/trezor-emu
 PIDFILE=/var/run/trezor-emu.pid
 
 # Wait for trezord, ts-uinput, and touchscreen calibration

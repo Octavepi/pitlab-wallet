@@ -30,12 +30,14 @@ echo "Rotation: $ROTATION"
 # Use the genimage configuration from br2-external
 GENIMAGE_CFG="${BR2_EXTERNAL_PATH}/board/genimage.cfg"
 
-# Ensure rpi-firmware contents are at the root of the boot partition layout
-# Buildroot typically drops firmware into images/rpi-firmware; flatten it for genimage
+# Ensure rpi-firmware contents are at the root of the boot partition
+# Buildroot typically drops firmware into images/rpi-firmware
 if [ -d "$IMAGES_DIR/rpi-firmware" ]; then
-    # Copy firmware blobs (start*.elf, fixup*.dat, etc.) to images root
-    cp -a "$IMAGES_DIR/rpi-firmware/"* "$IMAGES_DIR/" 2>/dev/null || true
-    # Ensure overlays directory is present at images root
+    # Copy firmware blobs (bootcode.bin, start*.elf, fixup*.dat) to boot root
+    cp -a "$IMAGES_DIR/rpi-firmware"/*.bin "$IMAGES_DIR/" 2>/dev/null || true
+    cp -a "$IMAGES_DIR/rpi-firmware"/start*.elf "$IMAGES_DIR/" 2>/dev/null || true
+    cp -a "$IMAGES_DIR/rpi-firmware"/fixup*.dat "$IMAGES_DIR/" 2>/dev/null || true
+    # Ensure overlays directory is present at root
     if [ -d "$IMAGES_DIR/rpi-firmware/overlays" ] && [ ! -d "$IMAGES_DIR/overlays" ]; then
         cp -a "$IMAGES_DIR/rpi-firmware/overlays" "$IMAGES_DIR/overlays"
     fi

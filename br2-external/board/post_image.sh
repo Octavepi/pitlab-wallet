@@ -1,31 +1,195 @@
 #!/bin/bash
-
 # PitLab Wallet post-image script
-# Dynamically configures display overlays and finalizes the SD card image
+# Configures boot files and creates the final SD card image
 
-set -e
+set -euo pipefail
+IFS=$'\n\t'
 
-IMAGES_DIR="$1"
-BR2_EXTERNAL_PATH="$2"
+# Script constants
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly COMMON_DIR="${SCRIPT_DIR}/common"
+readonly LOG_FILE="post_image.log"
 
-# Get environment variables set by build script
-BOARD="${PITLAB_WALLET_BOARD:-pi4}"
-DISPLAY="${PITLAB_DISPLAY:-${PITLAB_WALLET_DISPLAY:-lcd35}}"
-ROTATION="${PITLAB_ROTATION:-${PITLAB_WALLET_ROTATION:-90}}"
+# Source common configurations
+declare -a REQUIRED_CONFIGS=(
+    "firmware-config.sh"
+    "security-config.sh"
+    "kernel-config.sh"
+    "lcd-drivers.sh"
+)
 
-# Source the LCD driver database
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -f "$SCRIPT_DIR/common/lcd-drivers.sh" ]; then
-    source "$SCRIPT_DIR/common/lcd-drivers.sh"
-else
-    echo "WARNING: lcd-drivers.sh not found. Display configuration may be limited."
+source_configs() {
+    local missing_configs=()
+    
+    for config in "${REQUIRED_CONFIGS[@]}"; do
+        if [[ -f "${COMMON_DIR}/${config}" ]]; then
+            source "${COMMON_DIR}/${config}"
+        else
+            missing_configs+=("${config}")
+        fi
+    done
+    
+    if ((${#missing_configs[@]} > 0)); then
+        echo "ERROR: Missing required configuration files:" >&2
+        printf "%s\n" "${missing_configs[@]}" >&2
+        exit 1
+    fi
+}
+
+# Error handling
+error_handler() {
+    local exit_code=$1
+    local line_no=$2
+    local bash_lineno=$3
+    local last_cmd=$4
+    local func_trace=$5
+
+    {
+        echo "Error in post_image.sh:"
+        echo "Command: $last_cmd"
+        echo "Line: $line_no"
+        echo "Exit code: $exit_code"
+        echo "Function trace: $func_trace"
+        echo "Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+    } >&2
+    
+    exit "$exit_code"
+}
+
+trap 'error_handler $? $LINENO $BASH_LINENO "$BASH_COMMAND" $(printf "::%s" ${FUNCNAME[@]:-})' ERR
+
+# Argument validation
+if [[ $# -lt 2 ]]; then
+    echo "Usage: $0 <images-dir> <br2-external-path>" >&2
+    exit 1
 fi
+
+readonly IMAGES_DIR="$1"
+readonly BR2_EXTERNAL_PATH="$2"
+
+# Build configuration
+readonly BOARD="${PITLAB_WALLET_BOARD:-pi4}"
+readonly DISPLAY="${PITLAB_DISPLAY:-${PITLAB_WALLET_DISPLAY:-lcd35}}"
+readonly ROTATION="${PITLAB_ROTATION:-${PITLAB_WALLET_ROTATION:-90}}"
+
+# Initialize logging
+exec 1> >(tee -a "${IMAGES_DIR}/${LOG_FILE}")
+exec 2> >(tee -a "${IMAGES_DIR}/${LOG_FILE}" >&2)
 
 echo "PitLab Wallet post-image script running..."
 echo "Images directory: $IMAGES_DIR"
 echo "Board: $BOARD"
+echo "Display: $DISPLAY"
+echo "Rotation: $ROTATION"
+
+# Source configurations
+source_configs
+
+# Configure boot partition
+configure_boot() {
+    local boot_dir="$1"
+    
+    echo "Configuring boot partition..."
+    
+    # Copy board-specific kernel and device tree files
+    case "$BOARD" in
+        pi3)
+            cp "${IMAGES_DIR}/Image" "${boot_dir}/kernel8.img"
+            cp "${IMAGES_DIR}/bcm2710-rpi-3-b.dtb" "${boot_dir}/"
+            cp "${IMAGES_DIR}/bcm2710-rpi-3-b-plus.dtb" "${boot_dir}/"
+            ;;
+        pi4)
+            cp "${IMAGES_DIR}/Image" "${boot_dir}/kernel8.img"
+            cp "${IMAGES_DIR}/bcm2711-rpi-4-b.dtb" "${boot_dir}/"
+            ;;
+        pi5)
+            cp "${IMAGES_DIR}/Image" "${boot_dir}/kernel_2712.img"
+            cp "${IMAGES_DIR}/broadcom/2712-rpi5.dtb" "${boot_dir}/bcm2712-rpi-5.dtb"
+            ;;
+        *)
+            echo "ERROR: Unsupported board $BOARD" >&2
+            exit 1
+            ;;
+    esac
+    
+    # Configure display
+    local config=$(get_display_config "$DISPLAY" "$BOARD")
+    if [[ $? -ne 0 ]]; then
+        echo "ERROR: Invalid display configuration for $DISPLAY" >&2
+        exit 1
+    fi
+    
+    configure_display "$DISPLAY" "$BOARD" "${boot_dir}/config.txt" "$ROTATION"
+}
+
+# Create the SD card image
+create_sdcard_image() {
+    echo "Creating SD card image..."
+    
+    local genimage_cfg="${BR2_EXTERNAL_PATH}/board/genimage.cfg"
+    local genimage_tmp="${IMAGES_DIR}/genimage.tmp"
+    
+    # Create genimage configuration
+    sed -e "s/%BOARD%/${BOARD}/g" \
+        -e "s/%DISPLAY%/${DISPLAY}/g" \
+        "$genimage_cfg" > "${genimage_tmp}/genimage.cfg"
+    
+    # Run genimage
+    genimage \
+        --rootpath "${IMAGES_DIR}/rootfs" \
+        --tmppath "${genimage_tmp}" \
+        --inputpath "${IMAGES_DIR}" \
+        --outputpath "${IMAGES_DIR}" \
+        --config "${genimage_tmp}/genimage.cfg"
+}
+
+# Verify image
+verify_image() {
+    local image="$1"
+    
+    echo "Verifying image integrity..."
+    
+    # Generate checksums
+    sha256sum "$image" > "${image}.sha256"
+    sha512sum "$image" > "${image}.sha512"
+    
+    # Verify image size
+    local size=$(stat -L -c %s "$image")
+    local min_size=$((1024*1024*1024)) # 1GB
+    local max_size=$((8*1024*1024*1024)) # 8GB
+    
+    if [[ $size -lt $min_size || $size -gt $max_size ]]; then
+        echo "ERROR: Image size $size bytes is outside acceptable range" >&2
+        exit 1
+    fi
+}
+
+# Main execution
+main() {
+    # Create temporary directories
+    local boot_dir="${IMAGES_DIR}/boot"
+    mkdir -p "$boot_dir"
+    
+    # Configure boot files
+    configure_boot "$boot_dir"
+    
+    # Create SD card image
+    create_sdcard_image
+    
+    # Verify final image
+    verify_image "${IMAGES_DIR}/pitlab-wallet-${BOARD}.img"
+    
+    echo "Post-image script completed successfully"
+}
+
+# Run main function
+main
+echo "Board: $BOARD"
 echo "Display: $DISPLAY"  
 echo "Rotation: $ROTATION"
+
+# Clean up old image files
+rm -f "$IMAGES_DIR"/sdcard.img* "$IMAGES_DIR"/boot.vfat 2>/dev/null || true
 
 # Use the genimage configuration from br2-external
 GENIMAGE_CFG="${BR2_EXTERNAL_PATH}/board/genimage.cfg"
@@ -66,6 +230,16 @@ if [ -d "$LINUX_BUILD_DIR" ]; then
     if [ "$ARM64_MODE" = "1" ] && [ -d "$LINUX_BUILD_DIR/arch/arm64/boot/dts/broadcom" ]; then
         echo "Copying DTBs (arm64) to $IMAGES_DIR/"
         cp -f "$LINUX_BUILD_DIR/arch/arm64/boot/dts/broadcom"/bcm*.dtb "$IMAGES_DIR/" 2>/dev/null || true
+        
+        # Compile and install display rotation overlay
+        DTC="$LINUX_BUILD_DIR/scripts/dtc/dtc"
+        if [ -x "$DTC" ]; then
+            echo "Compiling display rotation overlay..."
+            OVERLAY_SRC="${BR2_EXTERNAL_PATH}/board/common/pitlab-display-rotation-overlay.dts"
+            OVERLAY_DTB="$IMAGES_DIR/overlays/pitlab-display-rotation.dtbo"
+            mkdir -p "$IMAGES_DIR/overlays"
+            $DTC -@ -I dts -O dtb -o "$OVERLAY_DTB" "$OVERLAY_SRC"
+        fi
     elif [ -d "$LINUX_BUILD_DIR/arch/arm/boot/dts/broadcom" ]; then
         echo "Copying DTBs (arm) to $IMAGES_DIR/"
         cp -f "$LINUX_BUILD_DIR/arch/arm/boot/dts/broadcom"/bcm*.dtb "$IMAGES_DIR/" 2>/dev/null || true
@@ -95,9 +269,43 @@ disable_splash=1
 enable_gic=1
 arm_64bit=${ARM64_MODE}
 
+# Pi5-specific configuration
+if [ "$BOARD" = "pi5" ]; then
+    total_mem=8192
+    gpu_mem=512
+    spi_dma_rx_buffer_size=65536
+    spi_dma_tx_buffer_size=65536
+    over_voltage=5
+else
+    gpu_mem=64
+fi
 
 # Common display settings
 max_usb_current=1
+display_hdmi_rotate=${ROTATION}
+
+# LCD driver configuration
+if [ "$DISPLAY" != "hdmi" ]; then
+    # Enable SPI interface with proper DMA settings for Pi5
+    if [ "$BOARD" = "pi5" ]; then
+        dtparam=spi=on,dma_buf_size=65536,fifo_depth=64
+    else
+        dtparam=spi=on
+    fi
+    
+    # Add the display overlay based on selection
+    dtoverlay=${DISPLAY}
+    
+    # Set LCD rotation with hardware-specific settings
+    if [ "$BOARD" = "pi5" ]; then
+        dtoverlay=pitlab-display-rotation-pi5,rotation=${ROTATION}
+        # Pi5-specific display tweaks for better performance
+        lcd_speed=100000000
+        lcd_rotate_simple=1
+    else
+        dtoverlay=pitlab-display-rotation,rotation=${ROTATION}
+    fi
+fi
 hdmi_force_hotplug=1
 config_hdmi_boost=5
 

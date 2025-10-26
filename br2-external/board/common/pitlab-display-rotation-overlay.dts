@@ -1,0 +1,17 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2835", "brcm,bcm2712";
+
+    fragment@0 {
+        target-path = "/";
+        __overlay__ {
+            display_rotate: display-rotate {
+                compatible = "pitlab,display-rotate";
+                status = "okay";
+                rotation = <0>;  // Default to 0, will be overridden by dtparam
+            };
+        };
+    };
+};

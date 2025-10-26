@@ -1,0 +1,62 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build Release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        board: [pi3, pi4, pi5]
+        display: [lcd35, hdmi]
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        submodules: recursive
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential unzip wget cpio rsync bc \
+          python3-dev python3-setuptools device-tree-compiler
+    
+    - name: Cache Buildroot downloads
+      uses: actions/cache@v3
+      with:
+        path: dl
+        key: buildroot-dl-${{ hashFiles('buildroot/**') }}
+        restore-keys: |
+          buildroot-dl-
+    
+    - name: Build image
+      run: |
+        chmod +x build.sh
+        ./build.sh ${{ matrix.board }} ${{ matrix.display }}
+    
+    - name: Validate firmware
+      run: |
+        chmod +x scripts/validate-firmware.sh
+        ./scripts/validate-firmware.sh output/images/pitlab-wallet-${{ matrix.board }}.img ${{ matrix.board }}
+    
+    - name: Generate checksums
+      run: |
+        cd output/images
+        sha256sum pitlab-wallet-${{ matrix.board }}.img > pitlab-wallet-${{ matrix.board }}.img.sha256
+        sha512sum pitlab-wallet-${{ matrix.board }}.img > pitlab-wallet-${{ matrix.board }}.img.sha512
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          output/images/pitlab-wallet-${{ matrix.board }}.img
+          output/images/pitlab-wallet-${{ matrix.board }}.img.sha256
+          output/images/pitlab-wallet-${{ matrix.board }}.img.sha512
+        prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

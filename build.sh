@@ -1,9 +1,342 @@
 #!/bin/bash
+# PitLab Wallet Build System
+# Central build script for all supported boards and configurations
 
-# PitLab Wallet Build System - Dynamic Multi-Board & Display Support
-# Builds an air-gapped Raspberry Pi wallet appliance with Trezor Core and trezord-go
+set -euo pipefail
+IFS=$'\n\t'
 
-set -e
+# Script constants
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly BR2_EXTERNAL="${SCRIPT_DIR}/br2-external"
+readonly BUILD_LOG="${SCRIPT_DIR}/build.log"
+readonly BUILDROOT_DIR="${SCRIPT_DIR}/buildroot"
+readonly OUTPUT_DIR="${SCRIPT_DIR}/output"
+
+# Configuration paths
+readonly COMMON_CONFIG_DIR="${BR2_EXTERNAL}/board/common"
+readonly KERNEL_FRAGMENT="${COMMON_CONFIG_DIR}/kernel.fragment"
+readonly BUSYBOX_FRAGMENT="${BR2_EXTERNAL}/configs/busybox.fragment"
+
+# Board configurations
+declare -A BOARD_CONFIGS=(
+    [pi3]="pitlab-wallet-pi3_defconfig"
+    [pi4]="pitlab-wallet-pi4_defconfig"
+    [pi5]="pitlab-wallet-pi5_defconfig"
+)
+
+# Source common configurations
+source "${COMMON_CONFIG_DIR}/lcd-drivers.sh"
+source "${COMMON_CONFIG_DIR}/security-config.sh"
+source "${COMMON_CONFIG_DIR}/firmware-config.sh"
+
+# Error handling
+error_handler() {
+    local exit_code=$1
+    local line_no=$2
+    local bash_lineno=$3
+    local last_cmd=$4
+    local func_trace=$5
+
+    echo -e "${RED}Build failed:${NC}" >&2
+    echo "Command: $last_cmd" >&2
+    echo "Line: $line_no" >&2
+    echo "Exit code: $exit_code" >&2
+    echo "Function trace: $func_trace" >&2
+    
+    # Save error details to log
+    {
+        echo "=== Build Error ==="
+        echo "Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+        echo "Command: $last_cmd"
+        echo "Line: $line_no"
+        echo "Exit code: $exit_code"
+        echo "Function trace: $func_trace"
+        echo "==================="
+    } >> "$BUILD_LOG"
+}
+
+# Cleanup handler
+cleanup() {
+    local exit_code=$?
+    
+    if [[ $exit_code -ne 0 ]]; then
+        echo -e "${RED}Build failed. See $BUILD_LOG for details.${NC}" >&2
+    fi
+    
+    # Clean temporary files
+    rm -rf "${OUTPUT_DIR}/tmp"
+}
+
+# Set up error handling
+trap 'cleanup' EXIT
+trap 'error_handler $? $LINENO $BASH_LINENO "$BASH_COMMAND" $(printf "::%s" ${FUNCNAME[@]:-})' ERR
+
+# Output formatting
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly BOLD='\033[1m'
+readonly NC='\033[0m'
+
+# Initialize logging
+exec 1> >(tee -a "$BUILD_LOG")
+exec 2> >(tee -a "$BUILD_LOG" >&2)
+
+# Build functions
+validate_configuration() {
+    local board="$1"
+    local display="$2"
+    
+    # Validate board
+    if [[ ! -v "BOARD_CONFIGS[$board]" ]]; then
+        echo -e "${RED}Error: Invalid board '$board'${NC}" >&2
+        echo "Supported boards: ${!BOARD_CONFIGS[*]}" >&2
+        return 1
+    fi
+    
+    # Validate display
+    if ! get_display_config "$display" >/dev/null 2>&1; then
+        echo -e "${RED}Error: Invalid display '$display'${NC}" >&2
+        echo "Run './build.sh list-displays' to see supported displays" >&2
+        return 1
+    fi
+}
+
+prepare_build_environment() {
+    echo -e "${BLUE}Preparing build environment...${NC}"
+    
+    # Create required directories
+    mkdir -p "${OUTPUT_DIR}"
+    
+    # Initialize Buildroot if needed
+    if [[ ! -f "${BUILDROOT_DIR}/Makefile" ]]; then
+        echo -e "${YELLOW}Initializing Buildroot...${NC}"
+        git submodule update --init
+    fi
+    
+    # Apply any pending patches
+    if [[ -d "${BR2_EXTERNAL}/patches" ]]; then
+        for patch in "${BR2_EXTERNAL}"/patches/*.patch; do
+            if [[ -f "$patch" ]]; then
+                echo "Applying patch: $(basename "$patch")"
+                patch -d "$BUILDROOT_DIR" -p1 < "$patch"
+            fi
+        done
+    fi
+}
+
+build_image() {
+    local board="$1"
+    local display="$2"
+    local config="${BOARD_CONFIGS[$board]}"
+    
+    echo -e "${BLUE}Building PitLab Wallet for $board with $display display...${NC}"
+    
+    # Export build variables
+    export PITLAB_WALLET_BOARD="$board"
+    export PITLAB_WALLET_DISPLAY="$display"
+    
+    # Configure and build
+    make -C "$BUILDROOT_DIR" O="$OUTPUT_DIR" \
+        BR2_EXTERNAL="$BR2_EXTERNAL" \
+        "$config" || return 1
+    
+    make -C "$BUILDROOT_DIR" O="$OUTPUT_DIR" || return 1
+    
+    echo -e "${GREEN}Build completed successfully!${NC}"
+    echo "Image location: ${OUTPUT_DIR}/images/pitlab-wallet-${board}.img"
+}
+
+show_usage() {
+    cat << EOF
+Usage: $0 [options] <board> <display>
+
+Build PitLab Wallet firmware image.
+
+Options:
+    --clean         Clean build directory before building
+    --help         Show this help message
+    list-boards    List supported boards
+    list-displays  List supported displays
+
+Supported boards:
+$(printf "    %s\n" "${!BOARD_CONFIGS[@]}" | sort)
+
+Example:
+    $0 pi4 lcd35     Build for Raspberry Pi 4 with LCD35 display
+EOF
+}
+
+# Main execution
+main() {
+    # Parse arguments
+    case "${1:-}" in
+        --help)
+            show_usage
+            exit 0
+            ;;
+        --clean)
+            echo -e "${BLUE}Cleaning build directory...${NC}"
+            rm -rf "${OUTPUT_DIR}"
+            shift
+            ;;
+        list-boards)
+            echo "Supported boards:"
+            printf "%s\n" "${!BOARD_CONFIGS[@]}" | sort
+            exit 0
+            ;;
+        list-displays)
+            list_displays
+            exit 0
+            ;;
+    esac
+    
+    # Validate arguments
+    if [[ $# -lt 2 ]]; then
+        show_usage
+        exit 1
+    fi
+    
+    local board="$1"
+    local display="$2"
+    
+    # Validate configuration
+    validate_configuration "$board" "$display"
+    
+    # Prepare environment
+    prepare_build_environment
+    
+    # Build image
+    build_image "$board" "$display"
+}
+
+# Run main function
+main "$@"
+log_info() {
+    echo -e "$(date '+%Y-%m-%d %H:%M:%S') ${GREEN}[INFO]${NC} $1" | tee -a "$BUILD_LOG"
+}
+
+log_warn() {
+    echo -e "$(date '+%Y-%m-%d %H:%M:%S') ${YELLOW}[WARN]${NC} $1" | tee -a "$BUILD_LOG"
+}
+
+log_error() {
+    echo -e "$(date '+%Y-%m-%d %H:%M:%S') ${RED}[ERROR]${NC} $1" | tee -a "$BUILD_LOG"
+}
+
+log_step() {
+    echo -e "$(date '+%Y-%m-%d %H:%M:%S') ${BLUE}[STEP]${NC} ${BOLD}$1${NC}" | tee -a "$BUILD_LOG"
+}
+
+log_debug() {
+    if [ "${DEBUG:-0}" = "1" ]; then
+        echo -e "$(date '+%Y-%m-%d %H:%M:%S') [DEBUG] $1" >> "$BUILD_LOG"
+    fi
+}
+
+# Check required dependencies
+check_dependencies() {
+    local missing_deps=()
+    
+    # Essential build tools
+    for cmd in make gcc g++ git wget cpio unzip rsync bc; do
+        if ! command -v $cmd >/dev/null 2>&1; then
+            missing_deps+=($cmd)
+        fi
+    done
+    
+    # Check for required libraries
+    for lib in libncurses-dev; do
+        if ! dpkg -l | grep -q "^ii.*$lib"; then
+            missing_deps+=($lib)
+        fi
+    done
+    
+    if [ ${#missing_deps[@]} -ne 0 ]; then
+        log_error "Missing required dependencies: ${missing_deps[*]}"
+        log_info "Please install missing dependencies and try again"
+        log_info "You can use: sudo apt-get install ${missing_deps[*]}"
+        exit 1
+    fi
+    
+    log_info "All required dependencies are installed"
+}
+
+# Validate build configuration
+validate_config() {
+    local valid_boards=("pi3" "pi4" "pi5")
+    local valid_displays=("lcd35" "hdmi")
+    local valid_rotations=("0" "90" "180" "270")
+    
+    if [[ ! " ${valid_boards[@]} " =~ " ${BOARD} " ]]; then
+        log_error "Invalid board: $BOARD. Must be one of: ${valid_boards[*]}"
+        exit 1
+    fi
+    
+    if [[ ! " ${valid_displays[@]} " =~ " ${DISPLAY} " ]]; then
+        log_error "Invalid display: $DISPLAY. Must be one of: ${valid_displays[*]}"
+        exit 1
+    fi
+    
+    if [[ ! " ${valid_rotations[@]} " =~ " ${ROTATION} " ]]; then
+        log_error "Invalid rotation: $ROTATION. Must be one of: ${valid_rotations[*]}"
+        exit 1
+    fi
+    
+    # Verify buildroot configuration
+    local defconfig="br2-external/configs/pitlab-wallet-${BOARD}_defconfig"
+    if [ ! -f "$defconfig" ]; then
+        log_error "Missing defconfig for board ${BOARD}: $defconfig"
+        exit 1
+    fi
+    
+    # Verify kernel config
+    local kernel_config="br2-external/board/linux-${BOARD}.config"
+    if [ ! -f "$kernel_config" ]; then
+        log_error "Missing kernel config for board ${BOARD}: $kernel_config"
+        exit 1
+    fi
+    
+    # Check for required overlay files
+    if [ "$DISPLAY" != "hdmi" ]; then
+        local display_overlay="br2-external/board/common/pitlab-display-rotation-overlay.dts"
+        if [ ! -f "$display_overlay" ]; then
+            log_error "Missing display rotation overlay: $display_overlay"
+            exit 1
+        fi
+        
+        if [ "$BOARD" = "pi5" ]; then
+            local pi5_overlay="br2-external/board/common/pitlab-display-rotation-pi5-overlay.dts"
+            if [ ! -f "$pi5_overlay" ]; then
+                log_error "Missing Pi5 display rotation overlay: $pi5_overlay"
+                exit 1
+            fi
+        fi
+    fi
+    
+    # Verify key scripts exist
+    local required_scripts=(
+        "br2-external/board/post_build.sh"
+        "br2-external/board/post_image.sh"
+        "br2-external/board/genimage.cfg"
+    )
+    
+    for script in "${required_scripts[@]}"; do
+        if [ ! -f "$script" ]; then
+            log_error "Missing required script: $script"
+            exit 1
+        fi
+    done
+    
+    # Validate board-specific configuration
+    if ! validate_board_config "$BOARD"; then
+        log_error "Board-specific validation failed for $BOARD"
+        exit 1
+    fi
+
+    log_info "Build configuration validated"
+}
 
 # Default values
 BOARD="pi4"
@@ -11,30 +344,187 @@ DISPLAY="lcd35"
 ROTATION="90"
 CLEAN=0
 DISTCLEAN=0
+BUILD_LOG="build_$(date +%Y%m%d_%H%M%S).log"
 # Note: Toolchain and kernel defconfigs are handled by Buildroot defconfigs.
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Logging functions
-log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
+# Board-specific configuration validation
+validate_board_config() {
+    local board="$1"
+    
+    case "$board" in
+        pi5)
+            # Check Pi5-specific requirements
+            if [ ! -f "br2-external/board/common/pitlab-display-rotation-pi5-overlay.dts" ]; then
+                log_error "Missing Pi5 display overlay"
+                return 1
+            fi
+            
+            # Verify Pi5 firmware availability
+            local pi5_files=("start5.elf" "fixup5.dat" "bcm2712-rpi-5-b.dtb")
+            for file in "${pi5_files[@]}"; do
+                if [ ! -f "buildroot/output/images/$file" ]; then
+                    log_warn "Missing Pi5 firmware file: $file (will be downloaded during build)"
+                fi
+            done
+            
+            # Check Pi5 kernel config options
+            local kernel_config="br2-external/board/linux-pi5.config"
+            if ! grep -q "CONFIG_BCM2712_IOMMU=y" "$kernel_config"; then
+                log_error "Pi5 kernel config missing required IOMMU support"
+                return 1
+            fi
+            ;;
+        *)
+            ;;
+    esac
+    
+    return 0
 }
 
-log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
+# Error handler function
+error_handler() {
+    local exit_code=$1
+    local line_no=$2
+    local bash_lineno=$3
+    local last_cmd=$4
+    local func_trace=$5
+
+    log_error "Error in build script at line $line_no"
+    log_error "Last command: $last_cmd"
+    log_error "Exit code: $exit_code"
+    
+    if [ -f "$BUILD_LOG" ]; then
+        log_info "Build log available at: $BUILD_LOG"
+        log_info "Last 10 lines of build log:"
+        tail -n 10 "$BUILD_LOG"
+    fi
 }
 
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+# Cleanup function
+cleanup() {
+    local exit_code=$?
+    if [ $exit_code -ne 0 ]; then
+        log_error "Build failed with exit code $exit_code"
+        if [ -f "$BUILD_LOG" ]; then
+            log_info "See $BUILD_LOG for details"
+        fi
+    else
+        log_info "Build completed successfully"
+    fi
+}
+
+# Parse command line arguments
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --board=*)
+                BOARD="${1#*=}"
+                ;;
+            --display=*)
+                DISPLAY="${1#*=}"
+                ;;
+            --rotation=*)
+                ROTATION="${1#*=}"
+                ;;
+            --clean)
+                CLEAN=1
+                ;;
+            --distclean)
+                DISTCLEAN=1
+                ;;
+            --debug)
+                DEBUG=1
+                ;;
+            --help)
+                show_help
+                exit 0
+                ;;
+            *)
+                log_error "Unknown option: $1"
+                show_help
+                exit 1
+                ;;
+        esac
+        shift
+    done
+}
+
+# Main build process
+main() {
+    log_step "Starting PitLab Wallet build system"
+    log_info "Board: $BOARD"
+    log_info "Display: $DISPLAY"
+    log_info "Rotation: $ROTATION"
+    
+    # Check dependencies and validate configuration
+    check_dependencies
+    validate_config
+    
+    if [ $DISTCLEAN -eq 1 ]; then
+        log_step "Performing distclean"
+        make -C buildroot distclean
+    fi
+    
+    if [ $CLEAN -eq 1 ]; then
+        log_step "Performing clean"
+        make -C buildroot clean
+    fi
+
+    # Setup buildroot configuration
+    log_step "Configuring buildroot for board: $BOARD"
+    defconfig="br2-external/configs/pitlab-wallet-${BOARD}_defconfig"
+    if [ ! -f "$defconfig" ]; then
+        log_error "Defconfig not found: $defconfig"
+        exit 1
+    fi
+    
+    make -C buildroot BR2_EXTERNAL=../br2-external "pitlab-wallet-${BOARD}_defconfig"
+    
+    # Build system
+    log_step "Building system image"
+    make -C buildroot
+    
+    if [ $? -eq 0 ]; then
+        log_step "Build completed successfully"
+        log_info "Output images available in: output/images/"
+    else
+        log_error "Build failed"
+        exit 1
+    fi
+}
+
+# Show help message
+show_help() {
+    cat << EOF
+PitLab Wallet Build System
+
+Usage: $0 [options]
+
+Options:
+  --board=<pi3|pi4|pi5>     Target board (default: pi4)
+  --display=<lcd35|hdmi>    Display type (default: lcd35)
+  --rotation=<0|90|180|270> Display rotation (default: 90)
+  --clean                   Clean build
+  --distclean              Clean everything
+  --debug                  Enable debug output
+  --help                   Show this help message
+
+EOF
+}
+
+# Main script execution
+parse_args "$@"
+main
 }
 
 log_step() {
-    echo -e "${BLUE}[STEP]${NC} $1"
+    echo -e "$(date '+%Y-%m-%d %H:%M:%S') ${BLUE}[STEP]${NC} ${BOLD}$1${NC}" | tee -a "$BUILD_LOG"
+}
+
+log_debug() {
+    if [ "${DEBUG:-0}" = "1" ]; then
+        echo -e "$(date '+%Y-%m-%d %H:%M:%S') [DEBUG] $1" >> "$BUILD_LOG"
+    fi
 }
 
 # Help function
@@ -90,6 +580,14 @@ The build process will:
 
 EOF
 }
+
+# Source helper scripts
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/scripts/check_dependencies.sh"
+
+# Initial checks
+validate_dependencies
+check_disk_space
 
 # Parse command line arguments (support both positional and long options)
 POSITIONAL_COUNT=0
@@ -343,3 +841,5 @@ main() {
 
 # Run main function
 main "$@"
+
+}

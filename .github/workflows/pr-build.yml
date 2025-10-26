@@ -1,0 +1,71 @@
+name: Pull Request Build
+
+on:
+  pull_request:
+    branches: [ main, dev ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/**'
+      - '!.github/workflows/build.yml'
+
+jobs:
+  validate:
+    name: Validate PR
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        submodules: recursive
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential unzip wget cpio rsync bc \
+          python3-dev python3-setuptools device-tree-compiler
+    
+    - name: Cache Buildroot downloads
+      uses: actions/cache@v3
+      with:
+        path: dl
+        key: buildroot-dl-${{ hashFiles('buildroot/**') }}
+        restore-keys: |
+          buildroot-dl-
+    
+    - name: Check dependencies
+      run: |
+        chmod +x scripts/check_dependencies.sh
+        ./scripts/check_dependencies.sh
+    
+    - name: Validate configuration
+      run: |
+        chmod +x scripts/verify-config.sh
+        ./scripts/verify-config.sh
+    
+    - name: Build Pi4 test image
+      run: |
+        chmod +x build.sh
+        ./build.sh pi4 lcd35
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: validate
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Run ShellCheck
+      uses: ludeeus/action-shellcheck@master
+      with:
+        scandir: './scripts'
+        
+    - name: Run SAST scan
+      uses: github/codeql-action/init@v2
+      with:
+        languages: 'python,cpp'
+    
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2

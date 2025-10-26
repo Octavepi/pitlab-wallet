@@ -1,3 +1,19 @@
-source "$BR2_EXTERNAL_PITLAB_WALLET_PATH/package/rpi-fbcp/Config.in"
-source "$BR2_EXTERNAL_PITLAB_WALLET_PATH/package/trezord-go/Config.in"
-source "$BR2_EXTERNAL_PITLAB_WALLET_PATH/package/trezor-emu/Config.in"
+# PitLab Wallet external package configuration
+
+menuconfig BR2_PACKAGE_PITLAB_WALLET
+    bool "PitLab Wallet Packages"
+    help
+      Select PitLab Wallet specific packages
+
+if BR2_PACKAGE_PITLAB_WALLET
+
+menu "Display Support"
+    source "$BR2_EXTERNAL_PITLAB_WALLET_PATH/package/rpi-fbcp/Config.in"
+endmenu
+
+menu "Hardware Security"
+    source "$BR2_EXTERNAL_PITLAB_WALLET_PATH/package/trezord-go/Config.in"
+    source "$BR2_EXTERNAL_PITLAB_WALLET_PATH/package/trezor-emu/Config.in"
+endmenu
+
+endif # BR2_PACKAGE_PITLAB_WALLET
